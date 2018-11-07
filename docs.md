@@ -21,7 +21,7 @@ Beskeder:
 
 __CONNECT__:  
 Indhold: intet. 
-Hvis modtageren hverken har front eller start, sættes begge til afsenderens port, og en __CONNECT__ sendes tilbage afsenderen.
+Hvis modtageren hverken har front eller back, sættes begge til afsenderens port, og en __CONNECT__ sendes tilbage afsenderen.
 Hvis modtageren har en front, men ikke en back, sættes back til afsenderens port
 Hvis modtageren både har en front og en back, sender modtageren en __SWITCH__ til sin egen back, hvorefter den sætter sin back til afsenderens port. 
 

@@ -15,6 +15,10 @@ public class P2PNode {
 		this.server = new ServerSocket(port);
 	}
 
+	public void start(int port, int target) {
+
+	}
+
 	public static void main(String[] args) {
 		System.out.println("Hi mom");
 	}
