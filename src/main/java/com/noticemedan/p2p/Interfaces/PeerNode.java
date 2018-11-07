@@ -1,7 +1,7 @@
 package com.noticemedan.p2p.Interfaces;
 
 
-import com.noticemedan.p2p.P2PNode;
+import com.noticemedan.p2p.Node;
 
 public interface PeerNode {
 
@@ -14,7 +14,7 @@ public interface PeerNode {
 
     void addPartnerValue(int key, String value, double id);
 
-    void assignPartner(P2PNode node);
+    void assignPartner(Node node);
 
     void healthCheck();
 
