@@ -5,21 +5,12 @@ import java.io.Serializable;
 public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private Integer port;
 	private MessageKind kind;
 	private String message;
 
-	public Message(Integer port, String message) {
-		this.port = port;
+	public Message(MessageKind kind, String message) {
+		this.kind = kind;
 		this.message = message;
-	}
-
-	public Integer getPort() {
-		return port;
-	}
-
-	public void setPort(Integer port) {
-		this.port = port;
 	}
 
 	public MessageKind getKind() {
@@ -36,5 +27,13 @@ public class Message implements Serializable {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	@Override
+	public String toString() {
+		return "Message{" +
+				"kind=" + kind +
+				", message='" + message + '\'' +
+				'}';
 	}
 }
