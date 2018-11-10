@@ -26,6 +26,6 @@ Hvis modtageren har en front, men ikke en back, sættes back til afsenderens por
 Hvis modtageren både har en front og en back, sender modtageren en __SWITCH__ til sin egen back, hvorefter den sætter sin back til afsenderens port. 
 
 __SWITCH__:  
-Indhold: fromPort|toPort (separeres med pipe)  
-Hvis modtageren's front matcher fromPort, sætter modtageren sin front til toPort, og sender en __CONNECT__ til toPort.
-Hvis modtageren's front ikke matcher fromPort, sender modtageren beskeden til sin back.
+Indhold: fromIp|fromPort|toIp|toPort (separeres med pipe)  
+Hvis modtageren's front matcher fromIp/fromPort, sætter modtageren sin front til toIp/toPort, og sender en __CONNECT__ til toIp/toPort.
+Hvis modtageren's front ikke matcher fromIp/fromPort, sender modtageren beskeden til sin back.

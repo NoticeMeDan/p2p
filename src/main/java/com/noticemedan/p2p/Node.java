@@ -75,7 +75,7 @@ public class Node {
 		if (this.front == null && this.back == null) {
 			this.front = new NodeInfo(ip, port);
 			this.back = new NodeInfo(ip, port);
-			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageKind.CONNECT, null));
+			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageKind.CONNECT));
 			this.readMessage();
 		} else if (this.back == null) {
 			this.back = new NodeInfo(ip, port);
@@ -86,7 +86,13 @@ public class Node {
 	}
 
 	private void handleSwitch(Message msg, String ip, Integer port) {
-
+		String[] nodes = msg.getMessage().split("|");
+		if (this.ip.equals(nodes[0]) && this.port == Integer.parseInt(nodes[1])) {
+			this.front = new NodeInfo(nodes[2], Integer.parseInt(nodes[3]));
+			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageKind.CONNECT));
+		} else {
+			this.sendMessage(this.back.getIp(), this.back.getPort(), msg);
+		}
 	}
 
 	private void whoAmI() {
@@ -102,7 +108,7 @@ public class Node {
 			if (args.length == 1) {
 				node.readMessage();
 			} else {
-				node.sendMessage(args[1], Integer.parseInt(args[2]), new Message(MessageKind.CONNECT, "Lol hej"));
+				node.sendMessage(args[1], Integer.parseInt(args[2]), new Message(MessageKind.CONNECT));
 				node.readMessage();
 			}
 		} else {

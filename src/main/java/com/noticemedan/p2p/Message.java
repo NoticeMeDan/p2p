@@ -13,6 +13,10 @@ public class Message implements Serializable {
 		this.message = message;
 	}
 
+	public Message(MessageKind kind) {
+		this.kind = kind;
+	}
+
 	public MessageKind getKind() {
 		return kind;
 	}
