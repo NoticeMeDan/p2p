@@ -3,10 +3,13 @@ package com.noticemedan.p2p;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class Node {
+	private String ip;
 	private Integer port;
 	private ServerSocket server;
 	private Socket client;
@@ -16,8 +19,9 @@ public class Node {
 	private NodeInfo front;
 	private NodeInfo back;
 
-	public Node(Integer port) {
+	public Node(Integer port, String ip) {
 		this.port = port;
+		this.ip = ip;
 	}
 
 	public void readMessage() {
@@ -76,8 +80,7 @@ public class Node {
 		} else if (this.back == null) {
 			this.back = new NodeInfo(ip, port);
 		} else {
-			// TODO: THis probably does not work, as the server is closed at this point
-			String arg = String.format("%s|%s|%s|%s", this.server.getInetAddress().getHostAddress(), this.port, ip, port);
+			String arg = String.format("%s|%s|%s|%s", this.ip, this.port, ip, port);
 			this.sendMessage(this.back.getIp(), this.back.getPort(), new Message(MessageKind.SWITCH, arg));
 		}
 	}
@@ -87,18 +90,18 @@ public class Node {
 	}
 
 	private void whoAmI() {
-		System.out.println("Me: " + this.port);
+		System.out.println("Me: " + this.ip + ", " + this.port);
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
 		System.out.println();
 	}
 
-	public static void main(String[] args) {
-		if (args.length >= 1 && args.length <= 3) {
-			Node node = new Node(Integer.parseInt(args[0]));
+	public static void main(String[] args) throws UnknownHostException {
+		if (args.length == 1 || args.length == 3) {
+			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
 			if (args.length == 1) {
 				node.readMessage();
-			} else if (args.length == 3) {
+			} else {
 				node.sendMessage(args[1], Integer.parseInt(args[2]), new Message(MessageKind.CONNECT, "Lol hej"));
 				node.readMessage();
 			}
