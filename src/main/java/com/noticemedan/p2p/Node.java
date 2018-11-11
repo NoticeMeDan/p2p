@@ -26,10 +26,8 @@ public class Node {
 
 	public void readMessage() {
 		try {
-			this.whoAmI();
-			this.server = new ServerSocket(this.port);
-			this.client = this.server.accept();
-			this.in = new ObjectInputStream(this.client.getInputStream());
+			this.printNodeInformation();
+			this.openCloseables();
 			System.out.println("Message received");
 			Message msg = (Message) this.in.readObject();
 			this.parseMessage(msg, this.client.getInetAddress().getHostAddress(), this.client.getPort());
@@ -37,9 +35,7 @@ public class Node {
 			e.printStackTrace();
 		} finally {
 			try {
-				this.server.close();
-				this.client.close();
-				this.in.close();
+				this.closeCloseables();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -95,11 +91,23 @@ public class Node {
 		}
 	}
 
-	private void whoAmI() {
+	private void printNodeInformation() {
 		System.out.println("Me: " + this.ip + ", " + this.port);
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
 		System.out.println();
+	}
+
+	private void openCloseables() throws IOException{
+		this.server = new ServerSocket(this.port);
+		this.client = this.server.accept();
+		this.in = new ObjectInputStream(this.client.getInputStream());
+	}
+
+	private void closeCloseables() throws IOException{
+		this.server.close();
+		this.client.close();
+		this.in.close();
 	}
 
 	public static void main(String[] args) throws UnknownHostException {
