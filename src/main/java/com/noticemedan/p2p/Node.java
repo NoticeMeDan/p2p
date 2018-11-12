@@ -25,7 +25,7 @@ public class Node {
 
 	private void sendMessage(Message msg) {
 		try {
-			this.client = new Socket(ip, msg.getPort());
+			this.client = new Socket(msg.getIp(), msg.getPort());
 			this.out = new ObjectOutputStream(this.client.getOutputStream());
 			out.writeObject(msg);
 		} catch (IOException e) {
@@ -40,28 +40,24 @@ public class Node {
 		}
 	}
 
-	private void handleConnect(Message msg, String receivedIP, Integer receivedPort) {
+	private void handleConnect(Message msg, String receivedIP) {
 		if (this.front == null && this.back == null) {
-			this.front = new NodeInfo(receivedIP, receivedPort);
-			this.back = new NodeInfo(receivedIP, receivedPort);
-			this.sendMessage(new Message(MessageType.CONNECT, receivedPort, receivedIP));
+			this.front = new NodeInfo(receivedIP, msg.getHost());
+			this.back = new NodeInfo(receivedIP, msg.getHost());
+			this.sendMessage(new Message(MessageType.CONNECT, receivedIP, msg.getHost(), this.port));
 
 
 		} else if (this.back == null) {
-			this.back = new NodeInfo(receivedIP, receivedPort);
+			this.back = new NodeInfo(receivedIP, msg.getHost());
 		} else {
-			//String arg = String.format("%s|%s|%s|%s", this.ip, this.port, receivedIP, receivedPort);
-			this.sendMessage(new Message(MessageType.SWITCH, this.back.getPort(), this.back.getIp()));
+			this.sendMessage(new Message(MessageType.SWITCH, this.back.getIp(), this.back.getPort(), this.port));
 		}
 	}
 
-	private void handleSwitch(Message msg, String ip, Integer port) {
-		String[] nodes = msg.getMessage().split("|");
-		if (this.ip.equals(nodes[0]) && this.port == Integer.parseInt(nodes[1])) {
-			this.front = new NodeInfo(nodes[2], Integer.parseInt(nodes[3]));
-			this.sendMessage(new Message(MessageType.CONNECT, this.front.getPort(), this.front.getIp()));
-		} else {
-			//this.sendMessage(this.back.getIp(), this.back.getPort(), msg);
+	private void handleSwitch(Message msg, String receivedIP) {
+		if(this.ip.equals(receivedIP) && this.port == msg.getPort()){
+			this.front = new NodeInfo(msg.getIp(), msg.getHost());
+			this.sendMessage(new Message(MessageType.CONNECT, this.front.getIp(), this.front.getPort(), this.port));
 		}
 	}
 
@@ -73,28 +69,30 @@ public class Node {
 	}
 
 
-	private void startNodeThreads() throws IOException {
+	private void startNodeThreads(Message msg) throws IOException {
+		if(msg.getPort() != 0){
+			Socket s = new Socket(msg.getIp(), msg.getPort());
+			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+			out.writeObject(msg);
+		}
 		while(true) {
 			new MessageHandler(serverSocket.accept()).start();
 		}
     }
 
 	public static void main(String[] args) throws IOException {
-		if (args.length == 1 || args.length == 3) {
+		if (args.length == 1) {
 			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
 			node.printNodeInformation();
-			node.startNodeThreads();
-			/**
-			if (args.length == 1) {
-				node.readMessage();
-			} else {
-				node.sendMessage(args[1], Integer.parseInt(args[2]), new Message(MessageType.CONNECT));
-				node.readMessage();
-			}
-		} else {
-			System.out.println("Usage: port [targetIp] [targetPort]");
-		}
-			 */
+			node.startNodeThreads(new Message(MessageType.CONNECT));
+
+		} else if (args.length == 3){
+			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
+			node.startNodeThreads(new Message(
+					MessageType.CONNECT,
+					args[1],
+					Integer.parseInt(args[2]),
+					Integer.parseInt(args[0])));
 		}
 	}
 
@@ -111,13 +109,14 @@ public class Node {
 				PrintWriter out = new PrintWriter(s.getOutputStream(), true);
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
+				String receivedIP = s.getInetAddress().toString().substring(1);
 				System.out.println(msg.getMessage());
 				switch (msg.getType()) {
 					case CONNECT:
-						handleConnect(msg, ip, port);
+						handleConnect(msg, receivedIP);
 						break;
 					case SWITCH:
-						handleSwitch(msg, ip, port);
+						handleSwitch(msg, receivedIP);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
