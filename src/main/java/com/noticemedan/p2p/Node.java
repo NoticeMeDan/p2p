@@ -12,8 +12,6 @@ public class Node {
 	private Socket client;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
-	private Thread messageHandler;
-	private Thread send;
 
 	private NodeInfo front;
 	private NodeInfo back;
@@ -22,13 +20,12 @@ public class Node {
 		this.port = port;
 		this.ip = ip;
 		this.serverSocket = new ServerSocket(port);
-		this.messageHandler = new Thread(new MessageHandler());
 	}
 
 
 	private void sendMessage(String ip, int targetPort, Message msg) {
 		try {
-			this.client = new Socket(ip, 6006);
+			this.client = new Socket(ip, targetPort);
 			this.out = new ObjectOutputStream(this.client.getOutputStream());
 			out.writeObject(msg);
 		} catch (IOException e) {
@@ -74,8 +71,10 @@ public class Node {
 	}
 
 
-	private void startNodeThreads(){
-	    this.messageHandler.start();
+	private void startNodeThreads() throws IOException {
+		while(true) {
+			new MessageHandler(serverSocket.accept()).start();
+		}
     }
 
 	public static void main(String[] args) throws IOException {
@@ -96,16 +95,20 @@ public class Node {
 		}
 	}
 
-	class MessageHandler implements Runnable {
-        @Override
-        public void run() {
+	class MessageHandler extends Thread {
+		Socket s;
+
+		public MessageHandler(Socket s) {
+			this.s = s;
+		}
+
+		@Override
+		public void run() {
 			try {
-            while(true){
-				Socket socket = serverSocket.accept();
-				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				System.out.println(in.toString());
 				Message msg = (Message) in.readObject();
-				switch(msg.getType()){
+				switch (msg.getType()) {
 					case CONNECT:
 						handleConnect(msg, ip, port);
 						break;
@@ -115,11 +118,10 @@ public class Node {
 					default:
 						System.out.println("Unknown MessageType");
 
-					}
-            	}
-			} catch (IOException | ClassNotFoundException e) {
-				e.printStackTrace();
+				}
+			} catch (IOException | ClassNotFoundException e1) {
+				e1.printStackTrace();
 			}
-        }
+		}
 	}
 }
