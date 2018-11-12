@@ -12,7 +12,6 @@ public class Node {
 	private Socket client;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
-
 	private NodeInfo front;
 	private NodeInfo back;
 
@@ -22,8 +21,7 @@ public class Node {
 		this.serverSocket = new ServerSocket(port);
 	}
 
-
-	private void sendMessage(Message msg) {
+	public void sendMessage(Message msg) {
 		try {
 			this.client = new Socket(msg.getIp(), msg.getPort());
 			this.out = new ObjectOutputStream(this.client.getOutputStream());
@@ -40,31 +38,10 @@ public class Node {
 		}
 	}
 
-	private void handleConnect(Message msg, String receivedIP) {
-		if (this.front == null && this.back == null) {
-			this.front = new NodeInfo(receivedIP, msg.getHost());
-			this.back = new NodeInfo(receivedIP, msg.getHost());
-			this.sendMessage(new Message(MessageType.CONNECT, receivedIP, msg.getHost(), this.port));
-
-
-		} else if (this.back == null) {
-			this.back = new NodeInfo(receivedIP, msg.getHost());
-		} else {
-			this.sendMessage(new Message(MessageType.SWITCH, this.back.getIp(), this.back.getPort(), this.port));
-		}
-	}
-
-	private void handleSwitch(Message msg, String receivedIP) {
-		if(this.ip.equals(receivedIP) && this.port == msg.getPort()){
-			this.front = new NodeInfo(msg.getIp(), msg.getHost());
-			this.sendMessage(new Message(MessageType.CONNECT, this.front.getIp(), this.front.getPort(), this.port));
-		}
-	}
-
-	private void printNodeInformation() {
-		System.out.println("Me: " + this.ip + ", " + this.port);
-		System.out.println("Front: " + this.front);
-		System.out.println("Back: " + this.back);
+	public void printNodeInformation() {
+		System.out.println("This Node: " + this.ip + ", " + this.port);
+		System.out.println("Front Node: " + this.front);
+		System.out.println("Back Node: " + this.back);
 		System.out.println();
 	}
 
@@ -76,7 +53,7 @@ public class Node {
 			out.writeObject(msg);
 		}
 		while(true) {
-			new MessageHandler(serverSocket.accept()).start();
+			new MessageHandler(this, serverSocket.accept()).start();
 		}
     }
 
@@ -96,38 +73,27 @@ public class Node {
 		}
 	}
 
-	class MessageHandler extends Thread {
-		Socket s;
+	public String getIp() {
+		return this.ip;
+	}
 
-		public MessageHandler(Socket s) {
-			this.s = s;
-		}
+	public int getPort() {
+		return this.port;
+	}
 
-		@Override
-		public void run() {
-			try {
-				PrintWriter out = new PrintWriter(s.getOutputStream(), true);
-				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-				Message msg = (Message) in.readObject();
-				String receivedIP = s.getInetAddress().toString().substring(1);
-				switch (msg.getType()) {
-					case CONNECT:
-						handleConnect(msg, receivedIP);
-						break;
-					case SWITCH:
-						handleSwitch(msg, receivedIP);
-						break;
-					default:
-						System.out.println("Unknown MessageType");
+	public NodeInfo getFront() {
+		return this.front;
+	}
 
-				}
-				s.close();
-				in.close();
-			} catch (IOException | ClassNotFoundException e1) {
-				e1.printStackTrace();
-			}
-			System.out.println("something changed!");
-			printNodeInformation();
-		}
+	public void setFront(NodeInfo nodeInfo) {
+		this.front = nodeInfo;
+	}
+
+	public NodeInfo getBack() {
+		return this.back;
+	}
+
+	public void setBack(NodeInfo nodeInfo) {
+		this.back = nodeInfo;
 	}
 }

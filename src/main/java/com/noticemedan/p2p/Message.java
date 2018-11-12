@@ -8,15 +8,6 @@ public class Message implements Serializable {
 	private MessageType type;
 	private String message;
 	private int port;
-
-	public int getHost() {
-		return host;
-	}
-
-	public void setHost(int host) {
-		this.host = host;
-	}
-
 	private int host;
 	private String ip;
 
@@ -35,16 +26,16 @@ public class Message implements Serializable {
 		return type;
 	}
 
-	public void setType(MessageType kind) {
-		this.type = kind;
+	public int getHost() {
+		return host;
 	}
 
-	public String getMessage() {
-		return message;
+	public int getPort() {
+		return port;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public String getIp() {
+		return ip;
 	}
 
 	@Override
@@ -53,21 +44,5 @@ public class Message implements Serializable {
 				"type=" + type +
 				", message='" + message + '\'' +
 				'}';
-	}
-
-	public int getPort() {
-		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public String getIp() {
-		return ip;
-	}
-
-	public void setIp(String ip) {
-		this.ip = ip;
 	}
 }
