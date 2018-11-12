@@ -23,9 +23,9 @@ public class Node {
 	}
 
 
-	private void sendMessage(String ip, int targetPort, Message msg) {
+	private void sendMessage(Message msg) {
 		try {
-			this.client = new Socket(ip, targetPort);
+			this.client = new Socket(ip, msg.getPort());
 			this.out = new ObjectOutputStream(this.client.getOutputStream());
 			out.writeObject(msg);
 		} catch (IOException e) {
@@ -40,16 +40,18 @@ public class Node {
 		}
 	}
 
-	private void handleConnect(Message msg, String ip, Integer port) {
+	private void handleConnect(Message msg, String receivedIP, Integer receivedPort) {
 		if (this.front == null && this.back == null) {
-			this.front = new NodeInfo(ip, port);
-			this.back = new NodeInfo(ip, port);
-			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageType.CONNECT));
+			this.front = new NodeInfo(receivedIP, receivedPort);
+			this.back = new NodeInfo(receivedIP, receivedPort);
+			this.sendMessage(new Message(MessageType.CONNECT, receivedPort, receivedIP));
+
+
 		} else if (this.back == null) {
-			this.back = new NodeInfo(ip, port);
+			this.back = new NodeInfo(receivedIP, receivedPort);
 		} else {
-			String arg = String.format("%s|%s|%s|%s", this.ip, this.port, ip, port);
-			this.sendMessage(this.back.getIp(), this.back.getPort(), new Message(MessageType.SWITCH, arg));
+			//String arg = String.format("%s|%s|%s|%s", this.ip, this.port, receivedIP, receivedPort);
+			this.sendMessage(new Message(MessageType.SWITCH, this.back.getPort(), this.back.getIp()));
 		}
 	}
 
@@ -57,9 +59,9 @@ public class Node {
 		String[] nodes = msg.getMessage().split("|");
 		if (this.ip.equals(nodes[0]) && this.port == Integer.parseInt(nodes[1])) {
 			this.front = new NodeInfo(nodes[2], Integer.parseInt(nodes[3]));
-			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageType.CONNECT));
+			this.sendMessage(new Message(MessageType.CONNECT, this.front.getPort(), this.front.getIp()));
 		} else {
-			this.sendMessage(this.back.getIp(), this.back.getPort(), msg);
+			//this.sendMessage(this.back.getIp(), this.back.getPort(), msg);
 		}
 	}
 
@@ -80,6 +82,7 @@ public class Node {
 	public static void main(String[] args) throws IOException {
 		if (args.length == 1 || args.length == 3) {
 			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
+			node.printNodeInformation();
 			node.startNodeThreads();
 			/**
 			if (args.length == 1) {
@@ -105,9 +108,10 @@ public class Node {
 		@Override
 		public void run() {
 			try {
+				PrintWriter out = new PrintWriter(s.getOutputStream(), true);
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-				System.out.println(in.toString());
 				Message msg = (Message) in.readObject();
+				System.out.println(msg.getMessage());
 				switch (msg.getType()) {
 					case CONNECT:
 						handleConnect(msg, ip, port);
@@ -119,9 +123,13 @@ public class Node {
 						System.out.println("Unknown MessageType");
 
 				}
+				s.close();
+				in.close();
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
+
+
 		}
 	}
 }

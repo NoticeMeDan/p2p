@@ -3,14 +3,17 @@ package com.noticemedan.p2p;
 import java.io.Serializable;
 
 public class Message implements Serializable {
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 
 	private MessageType type;
 	private String message;
+	private int port;
+	private String ip;
 
-	public Message(MessageType type, String message) {
+	public Message(MessageType type, int port, String ip) {
 		this.type = type;
-		this.message = message;
+		this.port = port;
+		this.ip = ip;
 	}
 
 	public Message(MessageType type) {
@@ -39,5 +42,21 @@ public class Message implements Serializable {
 				"type=" + type +
 				", message='" + message + '\'' +
 				'}';
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public String getIp() {
+		return ip;
+	}
+
+	public void setIp(String ip) {
+		this.ip = ip;
 	}
 }
