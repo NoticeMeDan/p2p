@@ -5,24 +5,24 @@ import java.io.Serializable;
 public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private MessageKind kind;
+	private MessageType type;
 	private String message;
 
-	public Message(MessageKind kind, String message) {
-		this.kind = kind;
+	public Message(MessageType type, String message) {
+		this.type = type;
 		this.message = message;
 	}
 
-	public Message(MessageKind kind) {
-		this.kind = kind;
+	public Message(MessageType kind) {
+		this.type = type;
 	}
 
-	public MessageKind getKind() {
-		return kind;
+	public MessageType getType() {
+		return type;
 	}
 
-	public void setKind(MessageKind kind) {
-		this.kind = kind;
+	public void setType(MessageType kind) {
+		this.type = kind;
 	}
 
 	public String getMessage() {
@@ -36,7 +36,7 @@ public class Message implements Serializable {
 	@Override
 	public String toString() {
 		return "Message{" +
-				"kind=" + kind +
+				"type=" + type +
 				", message='" + message + '\'' +
 				'}';
 	}

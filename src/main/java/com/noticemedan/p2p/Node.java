@@ -1,50 +1,34 @@
 package com.noticemedan.p2p;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class Node {
 	private String ip;
 	private Integer port;
-	private ServerSocket server;
+	private ServerSocket serverSocket;
 	private Socket client;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
+	private Thread messageHandler;
+	private Thread send;
 
 	private NodeInfo front;
 	private NodeInfo back;
 
-	public Node(Integer port, String ip) {
+	public Node(Integer port, String ip) throws IOException {
 		this.port = port;
 		this.ip = ip;
+		this.serverSocket = new ServerSocket(port);
+		this.messageHandler = new Thread(new MessageHandler());
 	}
 
-	public void readMessage() {
-		try {
-			this.printNodeInformation();
-			this.openCloseables();
-			System.out.println("Message received");
-			Message msg = (Message) this.in.readObject();
-			this.parseMessage(msg, this.client.getInetAddress().getHostAddress(), this.client.getPort());
-		} catch (IOException | ClassNotFoundException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				this.closeCloseables();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
-	public void sendMessage(String ip, int targetPort, Message msg) {
+	private void sendMessage(String ip, int targetPort, Message msg) {
 		try {
-			this.client = new Socket(ip, targetPort);
+			this.client = new Socket(ip, 6006);
 			this.out = new ObjectOutputStream(this.client.getOutputStream());
 			out.writeObject(msg);
 		} catch (IOException e) {
@@ -59,25 +43,16 @@ public class Node {
 		}
 	}
 
-	private void parseMessage(Message msg, String ip, Integer port) {
-		switch (msg.getKind()) {
-			case CONNECT: this.handleConnect(msg, ip, port); break;
-			case SWITCH: this.handleSwitch(msg, ip, port); break;
-			default: System.out.println("Unknown message kind");
-		}
-	}
-
 	private void handleConnect(Message msg, String ip, Integer port) {
 		if (this.front == null && this.back == null) {
 			this.front = new NodeInfo(ip, port);
 			this.back = new NodeInfo(ip, port);
-			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageKind.CONNECT));
-			this.readMessage();
+			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageType.CONNECT));
 		} else if (this.back == null) {
 			this.back = new NodeInfo(ip, port);
 		} else {
 			String arg = String.format("%s|%s|%s|%s", this.ip, this.port, ip, port);
-			this.sendMessage(this.back.getIp(), this.back.getPort(), new Message(MessageKind.SWITCH, arg));
+			this.sendMessage(this.back.getIp(), this.back.getPort(), new Message(MessageType.SWITCH, arg));
 		}
 	}
 
@@ -85,7 +60,7 @@ public class Node {
 		String[] nodes = msg.getMessage().split("|");
 		if (this.ip.equals(nodes[0]) && this.port == Integer.parseInt(nodes[1])) {
 			this.front = new NodeInfo(nodes[2], Integer.parseInt(nodes[3]));
-			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageKind.CONNECT));
+			this.sendMessage(this.front.getIp(), this.front.getPort(), new Message(MessageType.CONNECT));
 		} else {
 			this.sendMessage(this.back.getIp(), this.back.getPort(), msg);
 		}
@@ -98,29 +73,53 @@ public class Node {
 		System.out.println();
 	}
 
-	private void openCloseables() throws IOException{
-		this.server = new ServerSocket(this.port);
-		this.client = this.server.accept();
-		this.in = new ObjectInputStream(this.client.getInputStream());
-	}
 
-	private void closeCloseables() throws IOException{
-		this.server.close();
-		this.client.close();
-		this.in.close();
-	}
+	private void startNodeThreads(){
+	    this.messageHandler.start();
+    }
 
-	public static void main(String[] args) throws UnknownHostException {
+	public static void main(String[] args) throws IOException {
 		if (args.length == 1 || args.length == 3) {
 			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
+			node.startNodeThreads();
+			/**
 			if (args.length == 1) {
 				node.readMessage();
 			} else {
-				node.sendMessage(args[1], Integer.parseInt(args[2]), new Message(MessageKind.CONNECT));
+				node.sendMessage(args[1], Integer.parseInt(args[2]), new Message(MessageType.CONNECT));
 				node.readMessage();
 			}
 		} else {
 			System.out.println("Usage: port [targetIp] [targetPort]");
 		}
+			 */
+		}
+	}
+
+	class MessageHandler implements Runnable {
+        @Override
+        public void run() {
+			try {
+            while(true){
+				Socket socket = serverSocket.accept();
+				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+				System.out.println(in.toString());
+				Message msg = (Message) in.readObject();
+				switch(msg.getType()){
+					case CONNECT:
+						handleConnect(msg, ip, port);
+						break;
+					case SWITCH:
+						handleSwitch(msg, ip, port);
+						break;
+					default:
+						System.out.println("Unknown MessageType");
+
+					}
+            	}
+			} catch (IOException | ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+        }
 	}
 }

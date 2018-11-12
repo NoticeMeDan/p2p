@@ -1,6 +1,6 @@
 package com.noticemedan.p2p;
 
-public enum MessageKind {
+public enum MessageType {
 	CONNECT,
 	SWITCH
 }
