@@ -2,7 +2,6 @@ package com.noticemedan.p2p;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 
 public class MessageHandler extends Thread {
@@ -17,7 +16,6 @@ public class MessageHandler extends Thread {
     @Override
     public void run() {
         try {
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             Message msg = (Message) in.readObject();
             String receivedIP = socket.getInetAddress().toString().substring(1);
@@ -30,6 +28,7 @@ public class MessageHandler extends Thread {
                     break;
                 default:
                     System.out.println("Unknown MessageType");
+                    break;
 
             }
             socket.close();
@@ -43,26 +42,26 @@ public class MessageHandler extends Thread {
 
     private void handleSwitch(Message msg, String receivedIP) {
         if(node.getIp().equals(receivedIP) && node.getPort() == msg.getPort()){
-            node.setFront(new NodeInfo(msg.getIp(), msg.getHost()));
+            node.setFrontNode(new NodeInfo(msg.getIp(), msg.getHost()));
             node.sendMessage(
                     new Message(MessageType.CONNECT,
-                    node.getFront().getIp(),
-                    node.getFront().getPort(),
+                    node.getFrontNode().getIp(),
+                    node.getFrontNode().getPort(),
                     node.getPort())
             );
         }
     }
 
     private void handleConnect(Message msg, String receivedIP) {
-        if (node.getFront() == null && node.getBack() == null) {
-            node.setFront(new NodeInfo(receivedIP, msg.getHost()));
-            node.setBack(new NodeInfo(receivedIP, msg.getHost()));
+        if (node.getFrontNode() == null && node.getBackNode() == null) {
+            node.setFrontNode(new NodeInfo(receivedIP, msg.getHost()));
+            node.setBackNode(new NodeInfo(receivedIP, msg.getHost()));
             node.sendMessage(new Message(MessageType.CONNECT, receivedIP, msg.getHost(), node.getPort()));
 
-        } else if (node.getBack() == null) {
-            node.setBack(new NodeInfo(receivedIP, msg.getHost()));
+        } else if (node.getBackNode() == null) {
+            node.setBackNode(new NodeInfo(receivedIP, msg.getHost()));
         } else {
-            node.sendMessage(new Message(MessageType.SWITCH, node.getBack().getIp(), node.getBack().getPort(), node.getPort()));
+            node.sendMessage(new Message(MessageType.SWITCH, node.getBackNode().getIp(), node.getBackNode().getPort(), node.getPort()));
         }
     }
 }

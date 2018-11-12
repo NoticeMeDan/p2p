@@ -9,67 +9,70 @@ public class Node {
 	private String ip;
 	private Integer port;
 	private ServerSocket serverSocket;
-	private Socket client;
-	private ObjectInputStream in;
-	private ObjectOutputStream out;
-	private NodeInfo front;
-	private NodeInfo back;
+	private boolean active;
+	private NodeInfo frontNode;
+	private NodeInfo backNode;
 
-	public Node(Integer port, String ip) throws IOException {
+	public Node(Integer port, String ip) {
 		this.port = port;
 		this.ip = ip;
-		this.serverSocket = new ServerSocket(port);
+		openServerSocket();
+		this.active = true;
 	}
 
 	public void sendMessage(Message msg) {
-		try {
-			this.client = new Socket(msg.getIp(), msg.getPort());
-			this.out = new ObjectOutputStream(this.client.getOutputStream());
-			out.writeObject(msg);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				this.client.close();
-				this.out.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+			OutputSocket clientSocket = new OutputSocket(msg.getIp(),msg.getPort());
+			clientSocket.write(msg);
+			clientSocket.close();
 	}
 
-	public void printNodeInformation() {
-		System.out.println("This Node: " + this.ip + ", " + this.port);
-		System.out.println("Front Node: " + this.front);
-		System.out.println("Back Node: " + this.back);
-		System.out.println();
-	}
-
-
-	private void startNodeThreads(Message msg) throws IOException {
-		if(msg.getPort() != 0){
-			Socket s = new Socket(msg.getIp(), msg.getPort());
-			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-			out.writeObject(msg);
+	private void startNodeThreads(Message msg) {
+		if(msg.getPort() != 0) {
+			OutputSocket socket = new OutputSocket(msg.getIp(), msg.getPort());
+			socket.write(msg);
 		}
-		while(true) {
-			new MessageHandler(this, serverSocket.accept()).start();
+
+		while(this.active) {
+			new MessageHandler(this, getClientSocket())
+					.start();
 		}
     }
 
 	public static void main(String[] args) throws IOException {
+		String localIp = InetAddress.getLocalHost().getHostAddress();
+		int port = Integer.parseInt(args[0]);
+
 		if (args.length == 1) {
-			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
+			Node node = new Node(port, localIp);
 			node.printNodeInformation();
 			node.startNodeThreads(new Message(MessageType.CONNECT));
 
-		} else if (args.length == 3){
-			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
-			node.startNodeThreads(new Message(
-					MessageType.CONNECT,
-					args[1],
-					Integer.parseInt(args[2]),
-					Integer.parseInt(args[0])));
+		} else if (args.length == 3) {
+			Node node = new Node(port, localIp);
+			node.startNodeThreads(
+					new Message(
+							MessageType.CONNECT,
+							args[1],
+							Integer.parseInt(args[2]),
+							port
+					)
+			);
+		}
+	}
+
+	private void openServerSocket() {
+		try {
+			this.serverSocket = new ServerSocket(port);
+		} catch (IOException e) {
+			throw new RuntimeException("Unable to open port '" + this.port + "'", e);
+		}
+	}
+
+	private Socket getClientSocket() {
+		try {
+			return this.serverSocket.accept();
+		} catch (IOException e) {
+			throw new RuntimeException("Error getting client-socket", e);
 		}
 	}
 
@@ -81,19 +84,26 @@ public class Node {
 		return this.port;
 	}
 
-	public NodeInfo getFront() {
-		return this.front;
+	public NodeInfo getFrontNode() {
+		return this.frontNode;
 	}
 
-	public void setFront(NodeInfo nodeInfo) {
-		this.front = nodeInfo;
+	public void setFrontNode(NodeInfo nodeInfo) {
+		this.frontNode = nodeInfo;
 	}
 
-	public NodeInfo getBack() {
-		return this.back;
+	public NodeInfo getBackNode() {
+		return this.backNode;
 	}
 
-	public void setBack(NodeInfo nodeInfo) {
-		this.back = nodeInfo;
+	public void setBackNode(NodeInfo nodeInfo) {
+		this.backNode = nodeInfo;
+	}
+
+	public void printNodeInformation() {
+		System.out.println("This Node: " + this.ip + ", " + this.port);
+		System.out.println("Front Node: " + this.frontNode.toString());
+		System.out.println("Back Node: " + this.backNode.toString());
+		System.out.println();
 	}
 }
