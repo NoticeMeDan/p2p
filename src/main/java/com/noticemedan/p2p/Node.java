@@ -21,15 +21,15 @@ public class Node {
 	}
 
 	public void sendMessage(Message msg) {
-			OutputSocket clientSocket = new OutputSocket(msg.getIp(),msg.getPort());
-			clientSocket.write(msg);
-			clientSocket.close();
+			OutputSocket outputSocket = new OutputSocket(msg.getIp(),msg.getPort());
+			outputSocket.write(msg);
+			outputSocket.close();
 	}
 
 	private void startNodeThreads(Message msg) {
 		if(msg.getPort() != 0) {
-			OutputSocket socket = new OutputSocket(msg.getIp(), msg.getPort());
-			socket.write(msg);
+			OutputSocket outputSocket = new OutputSocket(msg.getIp(), msg.getPort());
+			outputSocket.write(msg);
 		}
 
 		while(this.active) {
@@ -84,7 +84,7 @@ public class Node {
 		return this.port;
 	}
 
-	public NodeInfo getFrontNode() {
+	public NodeInfo getFrontNodeInfo() {
 		return this.frontNode;
 	}
 
@@ -92,7 +92,7 @@ public class Node {
 		this.frontNode = nodeInfo;
 	}
 
-	public NodeInfo getBackNode() {
+	public NodeInfo getBackNodeInfo() {
 		return this.backNode;
 	}
 

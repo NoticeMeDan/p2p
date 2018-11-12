@@ -45,23 +45,23 @@ public class MessageHandler extends Thread {
             node.setFrontNode(new NodeInfo(msg.getIp(), msg.getHost()));
             node.sendMessage(
                     new Message(MessageType.CONNECT,
-                    node.getFrontNode().getIp(),
-                    node.getFrontNode().getPort(),
+                    node.getFrontNodeInfo().getIp(),
+                    node.getFrontNodeInfo().getPort(),
                     node.getPort())
             );
         }
     }
 
     private void handleConnect(Message msg, String receivedIP) {
-        if (node.getFrontNode() == null && node.getBackNode() == null) {
+        if (node.getFrontNodeInfo() == null && node.getBackNodeInfo() == null) {
             node.setFrontNode(new NodeInfo(receivedIP, msg.getHost()));
             node.setBackNode(new NodeInfo(receivedIP, msg.getHost()));
             node.sendMessage(new Message(MessageType.CONNECT, receivedIP, msg.getHost(), node.getPort()));
 
-        } else if (node.getBackNode() == null) {
+        } else if (node.getBackNodeInfo() == null) {
             node.setBackNode(new NodeInfo(receivedIP, msg.getHost()));
         } else {
-            node.sendMessage(new Message(MessageType.SWITCH, node.getBackNode().getIp(), node.getBackNode().getPort(), node.getPort()));
+            node.sendMessage(new Message(MessageType.SWITCH, node.getBackNodeInfo().getIp(), node.getBackNodeInfo().getPort(), node.getPort()));
         }
     }
 }
