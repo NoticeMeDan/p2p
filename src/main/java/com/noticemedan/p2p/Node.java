@@ -110,7 +110,6 @@ public class Node {
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
 				String receivedIP = s.getInetAddress().toString().substring(1);
-				System.out.println(msg.getMessage());
 				switch (msg.getType()) {
 					case CONNECT:
 						handleConnect(msg, receivedIP);
@@ -127,8 +126,8 @@ public class Node {
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
-
-
+			System.out.println("something changed!");
+			printNodeInformation();
 		}
 	}
 }
