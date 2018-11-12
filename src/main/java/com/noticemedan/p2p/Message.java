@@ -3,7 +3,7 @@ package com.noticemedan.p2p;
 import java.io.Serializable;
 
 public class Message implements Serializable {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	private MessageType type;
 	private String message;
