@@ -102,8 +102,8 @@ public class Node {
 
 	public void printNodeInformation() {
 		System.out.println("This Node: " + this.ip + ", " + this.port);
-		System.out.println("Front Node: " + this.frontNode.toString());
-		System.out.println("Back Node: " + this.backNode.toString());
+		System.out.println("Front Node: " + this.frontNode);
+		System.out.println("Back Node: " + this.backNode);
 		System.out.println();
 	}
 }
