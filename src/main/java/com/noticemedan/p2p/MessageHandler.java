@@ -41,8 +41,10 @@ public class MessageHandler extends Thread {
     }
 
     private void handleSwitch(Message msg, String receivedIP) {
-        if(node.getIp().equals(receivedIP) && node.getPort() == msg.getPort()){
+        if(node.getIp().equals(receivedIP) && node.getPort() == msg.getPort()) {
+
             node.setFrontNode(new NodeInfo(msg.getIp(), msg.getHost()));
+
             node.sendMessage(
                     new Message(MessageType.CONNECT,
                     node.getFrontNodeInfo().getIp(),
@@ -57,7 +59,6 @@ public class MessageHandler extends Thread {
             node.setFrontNode(new NodeInfo(receivedIP, msg.getHost()));
             node.setBackNode(new NodeInfo(receivedIP, msg.getHost()));
             node.sendMessage(new Message(MessageType.CONNECT, receivedIP, msg.getHost(), node.getPort()));
-
         } else if (node.getBackNodeInfo() == null) {
             node.setBackNode(new NodeInfo(receivedIP, msg.getHost()));
         } else {

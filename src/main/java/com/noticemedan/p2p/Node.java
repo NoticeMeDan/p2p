@@ -31,30 +31,35 @@ public class Node {
 			OutputSocket outputSocket = new OutputSocket(msg.getIp(), msg.getPort());
 			outputSocket.write(msg);
 		}
-
 		while(this.active) {
 			new MessageHandler(this, getClientSocket())
 					.start();
 		}
     }
 
+    //need new local variable names.
 	public static void main(String[] args) throws IOException {
 		String localIp = InetAddress.getLocalHost().getHostAddress();
-		int port = Integer.parseInt(args[0]);
+		int thisPort = Integer.parseInt(args[0]);
+
 
 		if (args.length == 1) {
-			Node node = new Node(port, localIp);
+			Node node = new Node(thisPort, localIp);
 			node.printNodeInformation();
 			node.startNodeThreads(new Message(MessageType.CONNECT));
 
 		} else if (args.length == 3) {
-			Node node = new Node(port, localIp);
+			String thatIp = args[1];
+			int thatPort = Integer.parseInt(args[2]);
+
+			Node node = new Node(thisPort, localIp);
+			node.printNodeInformation();
 			node.startNodeThreads(
 					new Message(
 							MessageType.CONNECT,
-							args[1],
-							Integer.parseInt(args[2]),
-							port
+							thatIp,
+							thatPort,
+							thisPort
 					)
 			);
 		}
