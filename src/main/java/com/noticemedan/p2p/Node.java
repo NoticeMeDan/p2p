@@ -10,9 +10,7 @@ public class Node {
 	private Integer port;
 	private ServerSocket serverSocket;
 	private Socket client;
-	private ObjectInputStream in;
 	private ObjectOutputStream out;
-	private boolean running;
 
 	private NodeInfo front;
 	private NodeInfo back;
@@ -64,7 +62,7 @@ public class Node {
 	}
 
 	void printNodeInformation() {
-		System.out.println("Me: " + this.ip + ", " + this.port);
+		System.out.println("This: " + this.ip + ", " + this.port);
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
 		System.out.println();
@@ -77,23 +75,10 @@ public class Node {
 			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 			out.writeObject(msg);
 		}
-		while(running) {
+		while(true) {
 			new MessageHandler(serverSocket.accept()).start();
 		}
     }
-
-    void stop(){
-		this.running = false;
-	}
-
-	public NodeInfo getFront() {
-		return front;
-	}
-
-	public NodeInfo getBack() {
-		return back;
-	}
-
 
 	public static void main(String[] args) throws IOException {
 		if (args.length == 1) {
@@ -114,14 +99,13 @@ public class Node {
 	class MessageHandler extends Thread {
 		Socket s;
 
-		public MessageHandler(Socket s) {
+		MessageHandler(Socket s) {
 			this.s = s;
 		}
 
 		@Override
 		public void run() {
 			try {
-				PrintWriter out = new PrintWriter(s.getOutputStream(), true);
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
 				String receivedIP = s.getInetAddress().toString().substring(1);
@@ -141,7 +125,6 @@ public class Node {
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
-			System.out.println("something changed!");
 			printNodeInformation();
 		}
 	}
