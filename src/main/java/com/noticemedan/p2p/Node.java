@@ -80,22 +80,6 @@ public class Node {
 		}
     }
 
-	public static void main(String[] args) throws IOException {
-		if (args.length == 1) {
-			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
-			node.printNodeInformation();
-			node.startNodeThreads(new Message(MessageType.CONNECT));
-
-		} else if (args.length == 3){
-			Node node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
-			node.startNodeThreads(new Message(
-					MessageType.CONNECT,
-					args[1],
-					Integer.parseInt(args[2]),
-					Integer.parseInt(args[0])));
-		}
-	}
-
 	class MessageHandler extends Thread {
 		Socket s;
 
