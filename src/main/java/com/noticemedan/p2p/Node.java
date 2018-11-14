@@ -12,9 +12,11 @@ public class Node {
 	private Socket client;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
+	private boolean running;
 
 	private NodeInfo front;
 	private NodeInfo back;
+
 
 	public Node(Integer port, String ip) throws IOException {
 		this.port = port;
@@ -56,12 +58,12 @@ public class Node {
 
 	private void handleSwitch(Message msg, String receivedIP) {
 		if(this.ip.equals(receivedIP) && this.port == msg.getPort()){
-			this.front = new NodeInfo(msg.getIp(), msg.getHost());
+			this.front = new NodeInfo(receivedIP, msg.getHost());
 			this.sendMessage(new Message(MessageType.CONNECT, this.front.getIp(), this.front.getPort(), this.port));
 		}
 	}
 
-	private void printNodeInformation() {
+	void printNodeInformation() {
 		System.out.println("Me: " + this.ip + ", " + this.port);
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
@@ -69,16 +71,29 @@ public class Node {
 	}
 
 
-	private void startNodeThreads(Message msg) throws IOException {
+	void startNodeThreads(Message msg) throws IOException {
 		if(msg.getPort() != 0){
 			Socket s = new Socket(msg.getIp(), msg.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 			out.writeObject(msg);
 		}
-		while(true) {
+		while(running) {
 			new MessageHandler(serverSocket.accept()).start();
 		}
     }
+
+    void stop(){
+		this.running = false;
+	}
+
+	public NodeInfo getFront() {
+		return front;
+	}
+
+	public NodeInfo getBack() {
+		return back;
+	}
+
 
 	public static void main(String[] args) throws IOException {
 		if (args.length == 1) {
