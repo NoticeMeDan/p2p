@@ -116,7 +116,6 @@ public class Node implements Runnable {
 
 		@Override
 		public void run() {
-
 			try {
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
