@@ -1,4 +1,8 @@
-package com.noticemedan.p2p;
+package com.noticemedan.p2p.Node;
+
+import com.noticemedan.p2p.Message.DataMessage;
+import com.noticemedan.p2p.Message.Message;
+import com.noticemedan.p2p.Message.MessageType;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -82,7 +86,7 @@ public class Node implements Runnable {
 	}
 
 	
-	void printNodeInformation() {
+	public void printNodeInformation() {
 		System.out.println("This: " + this.self.getIp() + ", " + this.self.getPort());
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
@@ -106,7 +110,7 @@ public class Node implements Runnable {
 		}
 	}
 
-	void connect(NodeInfo sender, NodeInfo receiver) {
+	public void connect(NodeInfo sender, NodeInfo receiver) {
 		Message msg = new Message(MessageType.CONNECT, sender);
 		this.sendMessage(msg, receiver);
 	}

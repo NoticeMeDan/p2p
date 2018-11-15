@@ -1,4 +1,4 @@
-package com.noticemedan.p2p;
+package com.noticemedan.p2p.Node;
 
 import java.io.Serializable;
 

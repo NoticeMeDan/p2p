@@ -1,9 +1,9 @@
 package com.noticemedan.p2p;
 
+import com.noticemedan.p2p.Node.Node;
+import com.noticemedan.p2p.Node.NodeInfo;
+
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.*;
 
 public class Main {
