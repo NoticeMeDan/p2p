@@ -147,11 +147,11 @@ public class Node implements Runnable {
 		}
 	}
 
-	private void handleGet(Message msg) {
+	private void handleGet(DataMessage msg) {
 		System.out.println();
 	}
 
-	private void handlePut(Message msg) {
+	private void handlePut(DataMessage msg) {
 		this.data.put(msg.getKey(), msg.getValue());
 		System.out.println("Successfully added to network");
 	}
