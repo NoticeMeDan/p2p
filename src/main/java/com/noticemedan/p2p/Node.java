@@ -36,42 +36,31 @@ public class Node {
 		}
 	}
 
-	private void handleConnect(Message msg, String senderIP) {
-		//If we're connecting for the first time
-		if (this.front == null && this.back == null) {
-			this.connectBoth(msg);
-			NodeInfo receiver  = new NodeInfo(senderIP, msg.getNodeInfo().getPort());
-			Message confirmMsg = new Message(MessageType.CONFIRM, this.self);
-			System.out.println("ME: " + this.self);
-			System.out.println("Receiver: "+receiver);
-			this.sendMessage(confirmMsg, receiver);
-		} 
-		else {
-			this.back = msg.getNodeInfo();
-		}
+	private void handleConnect(Message msg) {
+		this.front = msg.getNode();
+		this.back = msg.getNode();
+		Message confirmMessage = new Message(MessageType.CONFIRM, this.self);
+		this.sendMessage(confirmMessage, this.front);
 	}
 
 	private void handleConfirm(Message msg){
-		if (this.front == null && this.back == null){
-			this.connectBoth(msg);
+		this.back = msg.getNode();
+		if(this.front == null){
+			this.front = msg.getNode();
 		}
 		else{
-			this.back = msg.getNodeInfo();
-			NodeInfo switchReceiver = this.front;
-			Message switchMessage = new Message(MessageType.SWITCH, this.back);
-			this.sendMessage(switchMessage, switchReceiver);
+			if(!msg.isFinished()) {
+				Message switchMessage = new Message(MessageType.SWITCH, this.back);
+				this.sendMessage(switchMessage, this.front);
+			}
 		}
-	}
-
-	private void connectBoth(Message msg) {
-		this.front = msg.getNodeInfo();
-		this.back = msg.getNodeInfo();
 	}
 
 
 	private void handleSwitch(Message msg) {
-		this.back = msg.getNodeInfo();
-		this.sendMessage(new Message(MessageType.CONNECT, this.self), this.back);
+		this.front = msg.getNode();
+		Message confirmMessage = new Message(MessageType.CONFIRM, this.self, true);
+		this.sendMessage(confirmMessage, this.front);
 	}
 
 	
@@ -85,7 +74,7 @@ public class Node {
 
 	void startNodeThreads(Message msg) throws IOException {
 		if(msg.getPort() != 0){
-			Socket s = new Socket(msg.getNodeInfo().getIp(), msg.getPort());
+			Socket s = new Socket(msg.getNode().getIp(), msg.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 			out.writeObject(msg);
 		}
@@ -107,10 +96,9 @@ public class Node {
 			try {
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
-				String senderIP = s.getInetAddress().toString().substring(1);
 				switch (msg.getType()) {
 					case CONNECT:
-						handleConnect(msg, senderIP);
+						handleConnect(msg);
 						break;
 					case SWITCH:
 						handleSwitch(msg);

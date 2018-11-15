@@ -6,20 +6,27 @@ public class Message implements Serializable {
 	private static final long serialVersionUID = 5L;
 
 
-	private NodeInfo nodeInfo;
+	private NodeInfo node;
+	private boolean finished;
 	private MessageType type;
 	private int port;
 
 
-	public Message(MessageType type, NodeInfo nodeInfo, int port) {
+	public Message(MessageType type, NodeInfo node, int port) {
 		this.type = type;
-		this.nodeInfo = nodeInfo;
+		this.node = node;
 		this.port = port;
 	}
 
-	public Message(MessageType type, NodeInfo nodeInfo) {
+	public Message(MessageType type, NodeInfo node, boolean finished) {
 		this.type = type;
-		this.nodeInfo = nodeInfo;
+		this.node = node;
+		this.finished = finished;
+	}
+
+	public Message(MessageType type, NodeInfo node) {
+		this.type = type;
+		this.node = node;
 	}
 
 	public Message(MessageType type) {
@@ -30,9 +37,11 @@ public class Message implements Serializable {
 		return type;
 	}
 
-	public NodeInfo getNodeInfo() {
-		return nodeInfo;
+	public NodeInfo getNode() {
+		return node;
 	}
+
+	public boolean isFinished(){ return finished; }
 
 	public int getPort() {
 		return port;
