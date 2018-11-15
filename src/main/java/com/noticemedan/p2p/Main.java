@@ -1,7 +1,10 @@
 package com.noticemedan.p2p;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 public class Main {
 
@@ -11,7 +14,7 @@ public class Main {
         Node node;
         try {
             int port = Integer.parseInt(args[0]);
-            String ip = InetAddress.getLocalHost().getHostAddress();
+            String ip = getHostIp();
         switch (type){
             case CREATE_FIRST:
                 node = new Node(ip, port);
@@ -35,5 +38,17 @@ public class Main {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static String getHostIp() {
+        try(final DatagramSocket socket = new DatagramSocket()){
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            return socket.getLocalAddress().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
