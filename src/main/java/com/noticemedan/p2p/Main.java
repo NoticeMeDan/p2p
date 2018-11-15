@@ -31,13 +31,16 @@ public class Main {
                 node.connect(info, receiver);
                 break;
             }
-
         }
         catch (IOException e) {
             e.printStackTrace();
         }
         //Insert Scanner that calls get or put;
         /**
+         *  CommandType type = ArgumentHandler.handle(args);
+         *  (Should be able to handle all request, maybe you'd like to close a node and start a new one)
+         *  case CREATE_FIRST, case CREATE_NODE, case PUT, case GET
+         *
          *  case PUT:
          *                 NodeInfo putter = new NodeInfo(args[4], Integer.parseInt(args[5]));
          *                 sendPut(Integer.parseInt(args[1]), args[2], putter);
