@@ -11,8 +11,8 @@ public class ArgumentHandler {
         //PUT GET NEEDS IP
         Pattern createNew = Pattern.compile("(?<createNew>[0-9]+){1}", Pattern.MULTILINE);
         Pattern createNode = Pattern.compile("^(?<createNode>[0-9]+ [0-9\\.]+ [0-9]+)$", Pattern.MULTILINE);
-        Pattern put = Pattern.compile("(?<put>put .+ .+ [0-9]+){1}", Pattern.MULTILINE);
-        Pattern get = Pattern.compile("(?<get>get .+ [0-9]+){1}", Pattern.MULTILINE);
+        Pattern put = Pattern.compile("(?<put>put [0-9]+ [a-zA-ZæøåÆØÅ]+ [0-9\\.]+ [0-9]+){1}", Pattern.MULTILINE);
+        Pattern get = Pattern.compile("(?<get>get [0-9]+ [0-9\\.]+ [0-9]+){1}", Pattern.MULTILINE);
 
 
         if(createNew.matcher(argumentString).matches())

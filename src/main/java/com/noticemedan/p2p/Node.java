@@ -3,12 +3,15 @@ package com.noticemedan.p2p;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Hashtable;
 
 public class Node implements Runnable {
 	private ServerSocket serverSocket;
 	private Socket clientSocket;
 	private ObjectOutputStream out;
 
+	private Hashtable<Integer, String> data;
+	//private Hashtable<Integer, String> backup;
 	private NodeInfo self;
 	private NodeInfo front;
 	private NodeInfo back;
@@ -16,6 +19,7 @@ public class Node implements Runnable {
 
 	public Node(String ip, Integer port) throws IOException {
 		this.self = new NodeInfo(ip, port);
+		this.data = new Hashtable<>();
 		this.serverSocket = new ServerSocket(port);
 	}
 
@@ -140,9 +144,17 @@ public class Node implements Runnable {
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
-			printNodeInformation();
 		}
 	}
 
-	
+	private void handleGet(Message msg) {
+		System.out.println();
+	}
+
+	private void handlePut(Message msg) {
+		this.data.put(msg.getKey(), msg.getValue());
+		System.out.println("Successfully added to network");
+	}
+
+
 }

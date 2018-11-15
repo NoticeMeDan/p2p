@@ -10,26 +10,19 @@ public class Message implements Serializable {
 	private boolean finished;
 	private MessageType type;
 	private int port;
-
-	public Message(MessageType type, NodeInfo node, int port) {
-		this.type = type;
-		this.node = node;
-		this.port = port;
-	}
-
-	public Message(MessageType type, NodeInfo node, boolean finished) {
-		this.type = type;
-		this.node = node;
-		this.finished = finished;
-	}
+	private int key;
+	private String value;
 
 	public Message(MessageType type, NodeInfo node) {
 		this.type = type;
 		this.node = node;
 	}
 
-	public Message(MessageType type) {
+	public Message(MessageType type, NodeInfo client, Integer key, String value){
 		this.type = type;
+		this.node = client;
+		this.key = key;
+		this.value = value;
 	}
 
 	public MessageType getType() {
@@ -40,10 +33,11 @@ public class Message implements Serializable {
 		return node;
 	}
 
-	public boolean isFinished(){ return finished; }
-
-	public int getPort() {
-		return port;
+	public Integer getKey() {
+		return this.key;
 	}
 
+	public String getValue() {
+		return this.value;
+	}
 }
