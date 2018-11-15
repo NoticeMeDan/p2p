@@ -17,7 +17,7 @@ public class Main {
             int port = Integer.parseInt(args[0]);
             String ip = getHostIp();
         switch (type){
-            case CREATE_FIRST:
+            case CREATE_FIRST_NODE:
                 node = new Node(ip, port);
                 new Thread(node).start();
                 node.printNodeInformation();
@@ -30,6 +30,9 @@ public class Main {
                 NodeInfo receiver = new NodeInfo(args[1], Integer.parseInt(args[2]));
                 node.connect(info, receiver);
                 break;
+            default:
+                printArgumentGuidelines();
+                break;
             }
         }
         catch (IOException e) {
@@ -39,7 +42,7 @@ public class Main {
         /**
          *  CommandType type = ArgumentHandler.handle(args);
          *  (Should be able to handle all request, maybe you'd like to close a node and start a new one)
-         *  case CREATE_FIRST, case CREATE_NODE, case PUT, case GET
+         *  case CREATE_FIRST_NODE, case CREATE_NODE, case PUT, case GET
          *
          *  case PUT:
          *                 NodeInfo putter = new NodeInfo(args[4], Integer.parseInt(args[5]));
@@ -66,12 +69,22 @@ public class Main {
             try (final DatagramSocket socket = new DatagramSocket()) {
                 socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
                 return socket.getLocalAddress().getHostAddress();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (SocketException e) {
+            } catch (UnknownHostException | SocketException e) {
                 e.printStackTrace();
             }
         }
         return null;
+    }
+
+    private static void printArgumentGuidelines(){
+        System.out.println("################################################");
+        System.out.println("Please use one of the following command formats:");
+        System.out.println("################################################");
+        System.out.println("New network: [your port]");
+        System.out.println("New node:    [your port] [node ip] [node port]");
+        System.out.println("Put request: [your port] put [key] [value] [node ip] [node port]");
+        System.out.println("Get request: [your port] get [key] [node ip] [node port]");
+        System.out.println("################################################");
+        System.out.println("The program uses your local ip.");
     }
 }

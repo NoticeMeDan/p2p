@@ -16,13 +16,13 @@ public class ArgumentHandler {
 
 
         if(createNew.matcher(argumentString).matches())
-            return CommandType.CREATE_FIRST;
+            return CommandType.CREATE_FIRST_NODE;
         if(createNode.matcher(argumentString).matches())
             return CommandType.CREATE_NODE;
         if(put.matcher(argumentString).matches())
             return CommandType.PUT;
         if(get.matcher(argumentString).matches())
             return CommandType.GET;
-        else return null;
+        else return CommandType.UNKNOWN;
     }
 }
