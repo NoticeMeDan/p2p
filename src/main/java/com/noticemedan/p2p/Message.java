@@ -3,28 +3,23 @@ package com.noticemedan.p2p;
 import java.io.Serializable;
 
 public class Message implements Serializable {
-	private static final long serialVersionUID = 4L;
+	private static final long serialVersionUID = 5L;
 
+
+	private NodeInfo nodeInfo;
 	private MessageType type;
-	private String message;
 	private int port;
 
-	public int getHost() {
-		return host;
-	}
 
-	public void setHost(int host) {
-		this.host = host;
-	}
-
-	private int host;
-	private String ip;
-
-	public Message(MessageType type, String ip, int port, int host) {
+	public Message(MessageType type, NodeInfo nodeInfo, int port) {
 		this.type = type;
+		this.nodeInfo = nodeInfo;
 		this.port = port;
-		this.ip = ip;
-		this.host = host;
+	}
+
+	public Message(MessageType type, NodeInfo backInfo) {
+		this.type = type;
+		this.nodeInfo = nodeInfo;
 	}
 
 	public Message(MessageType type) {
@@ -35,39 +30,12 @@ public class Message implements Serializable {
 		return type;
 	}
 
-	public void setType(MessageType kind) {
-		this.type = kind;
-	}
-
-	public String getMessage() {
-		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
-	}
-
-	@Override
-	public String toString() {
-		return "Message{" +
-				"type=" + type +
-				", message='" + message + '\'' +
-				'}';
+	public NodeInfo getNodeInfo() {
+		return nodeInfo;
 	}
 
 	public int getPort() {
 		return port;
 	}
 
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public String getIp() {
-		return ip;
-	}
-
-	public void setIp(String ip) {
-		this.ip = ip;
-	}
 }

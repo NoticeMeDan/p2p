@@ -1,31 +1,27 @@
 package com.noticemedan.p2p;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Node {
-	private String ip;
-	private Integer port;
 	private ServerSocket serverSocket;
 	private Socket client;
 	private ObjectOutputStream out;
 
+	private NodeInfo self;
 	private NodeInfo front;
 	private NodeInfo back;
 
 
 	public Node(Integer port, String ip) throws IOException {
-		this.port = port;
-		this.ip = ip;
+		this.self = new NodeInfo(ip, port);
 		this.serverSocket = new ServerSocket(port);
 	}
 
-
-	private void sendMessage(Message msg) {
+	private void sendMessage(Message msg, NodeInfo receiver) {
 		try {
-			this.client = new Socket(msg.getIp(), msg.getPort());
+			this.client = new Socket(receiver.getIp(), receiver.getPort());
 			this.out = new ObjectOutputStream(this.client.getOutputStream());
 			out.writeObject(msg);
 		} catch (IOException e) {
@@ -40,29 +36,49 @@ public class Node {
 		}
 	}
 
-	private void handleConnect(Message msg, String receivedIP) {
+	private void handleConnect(Message msg, String senderIP) {
+		//If we're connecting for the first time
 		if (this.front == null && this.back == null) {
-			this.front = new NodeInfo(receivedIP, msg.getHost());
-			this.back = new NodeInfo(receivedIP, msg.getHost());
-			this.sendMessage(new Message(MessageType.CONNECT, receivedIP, msg.getHost(), this.port));
+			this.connectBoth(msg);
+			NodeInfo receiver  = new NodeInfo(senderIP, msg.getPort());
+			Message confirmMsg = new Message(MessageType.CONFIRM, this.self);
+			this.sendMessage(confirmMsg, receiver);
+		} 
+		else {
+			this.back = msg.getNodeInfo();
+			NodeInfo confirmReceiver  = new NodeInfo(senderIP, msg.getPort());
+			Message confirmMsg = new Message(MessageType.CONFIRM, this.self);
+			this.sendMessage(confirmMsg, confirmReceiver);
 
-
-		} else if (this.back == null) {
-			this.back = new NodeInfo(receivedIP, msg.getHost());
-		} else {
-			this.sendMessage(new Message(MessageType.SWITCH, this.back.getIp(), this.back.getPort(), this.port));
+			NodeInfo switchReceiver = this.front;
+			Message switchMessage = new Message(MessageType.SWITCH, confirmReceiver);
+			this.sendMessage(switchMessage, switchReceiver);
 		}
 	}
 
-	private void handleSwitch(Message msg, String receivedIP) {
-		if(this.ip.equals(receivedIP) && this.port == msg.getPort()){
-			this.front = new NodeInfo(receivedIP, msg.getHost());
-			this.sendMessage(new Message(MessageType.CONNECT, this.front.getIp(), this.front.getPort(), this.port));
+	private void handleConfirm(Message msg){
+		if (this.front == null && this.back == null){
+			this.connectBoth(msg);
+		}
+		else{
+			this.back = msg.getNodeInfo();
 		}
 	}
 
+	private void connectBoth(Message msg) {
+		this.front = msg.getNodeInfo();
+		this.back = msg.getNodeInfo();
+	}
+
+
+	private void handleSwitch(Message msg) {
+		this.back = msg.getNodeInfo();
+		this.sendMessage(new Message(MessageType.CONNECT, this.self), this.front);
+	}
+
+	
 	void printNodeInformation() {
-		System.out.println("This: " + this.ip + ", " + this.port);
+		System.out.println("This: " + this.self.getIp() + ", " + this.self.getPort());
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
 		System.out.println();
@@ -71,7 +87,7 @@ public class Node {
 
 	void startNodeThreads(Message msg) throws IOException {
 		if(msg.getPort() != 0){
-			Socket s = new Socket(msg.getIp(), msg.getPort());
+			Socket s = new Socket(msg.getNodeInfo().getIp(), msg.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 			out.writeObject(msg);
 		}
@@ -89,27 +105,31 @@ public class Node {
 
 		@Override
 		public void run() {
+			printNodeInformation();
 			try {
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
-				String receivedIP = s.getInetAddress().toString().substring(1);
+				String senderIP = s.getInetAddress().toString().substring(1);
 				switch (msg.getType()) {
 					case CONNECT:
-						handleConnect(msg, receivedIP);
+						handleConnect(msg, senderIP);
 						break;
 					case SWITCH:
-						handleSwitch(msg, receivedIP);
+						handleSwitch(msg);
+						break;
+					case CONFIRM:
+						handleConfirm(msg);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
-
 				}
 				s.close();
 				in.close();
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
-			printNodeInformation();
 		}
 	}
+
+	
 }

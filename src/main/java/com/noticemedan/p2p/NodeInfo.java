@@ -1,6 +1,8 @@
 package com.noticemedan.p2p;
 
-public class NodeInfo {
+import java.io.Serializable;
+
+public class NodeInfo implements Serializable {
 	private String ip;
 	private Integer port;
 

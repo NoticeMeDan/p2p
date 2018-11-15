@@ -18,7 +18,8 @@ public class Main {
                 break;
             case CREATE_NODE:
                 node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
-                node.startNodeThreads(new Message(MessageType.CONNECT, args[1], Integer.parseInt(args[2]), Integer.parseInt(args[0])));
+                NodeInfo info = new NodeInfo( args[1], Integer.parseInt(args[2]));
+                node.startNodeThreads(new Message(MessageType.CONNECT, info, Integer.parseInt(args[0])));
             case PUT:
                 break;
             case GET:

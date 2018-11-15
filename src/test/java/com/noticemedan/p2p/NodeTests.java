@@ -61,7 +61,8 @@ public class NodeTests {
             Node second = new Node(SECOND_NODE_PORT, localhost);
             Thread t2 = new Thread(() -> {
                 try {
-                    second.startNodeThreads(new Message(MessageType.CONNECT, localhost, FIRST_NODE_PORT, SECOND_NODE_PORT));
+                    NodeInfo info = new NodeInfo( localhost, FIRST_NODE_PORT);
+                    second.startNodeThreads(new Message(MessageType.CONNECT, info, SECOND_NODE_PORT));
                 } catch (IOException e) {
                     Assert.fail(e.getMessage());
                 }
@@ -82,7 +83,8 @@ public class NodeTests {
             Node third = new Node(THIRD_NODE_PORT, localhost);
             Thread t3 = new Thread(() -> {
                 try {
-                    third.startNodeThreads(new Message(MessageType.CONNECT, localhost, FIRST_NODE_PORT, THIRD_NODE_PORT));
+                    NodeInfo info = new NodeInfo( localhost, SECOND_NODE_PORT);
+                    third.startNodeThreads(new Message(MessageType.CONNECT, info, THIRD_NODE_PORT));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
