@@ -4,9 +4,9 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Node {
+public class Node implements Runnable {
 	private ServerSocket serverSocket;
-	private Socket client;
+	private Socket clientSocket;
 	private ObjectOutputStream out;
 
 	private NodeInfo self;
@@ -14,21 +14,21 @@ public class Node {
 	private NodeInfo back;
 
 
-	public Node(Integer port, String ip) throws IOException {
+	public Node(String ip, Integer port) throws IOException {
 		this.self = new NodeInfo(ip, port);
 		this.serverSocket = new ServerSocket(port);
 	}
 
-	private void sendMessage(Message msg, NodeInfo receiver) {
+	private void sendMessage(Message msg, NodeInfo receiver){
 		try {
-			this.client = new Socket(receiver.getIp(), receiver.getPort());
-			this.out = new ObjectOutputStream(this.client.getOutputStream());
+			this.clientSocket = new Socket(receiver.getIp(), receiver.getPort());
+			this.out = new ObjectOutputStream(this.clientSocket.getOutputStream());
 			out.writeObject(msg);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				this.client.close();
+				this.clientSocket.close();
 				this.out.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -37,29 +37,43 @@ public class Node {
 	}
 
 	private void handleConnect(Message msg) {
-		this.front = msg.getNode();
-		this.back = msg.getNode();
-		Message confirmMessage = new Message(MessageType.CONFIRM, this.self);
-		this.sendMessage(confirmMessage, this.front);
-	}
-
-	private void handleConfirm(Message msg){
-		this.back = msg.getNode();
-		if(this.front == null){
-			this.front = msg.getNode();
-		}
-		else{
-			if(!msg.isFinished()) {
-				Message switchMessage = new Message(MessageType.SWITCH, this.back);
-				this.sendMessage(switchMessage, this.front);
+		//The very first Node handled
+		if(this.back == null) {
+			this.back = msg.getNode();
+			Message confirm = new Message(MessageType.CONFIRM, this.self);
+			this.sendMessage(confirm, this.back);
+			if(this.front == null){
+				this.front = msg.getNode();
+				Message connect = new Message(MessageType.CONNECT, this.self);
+				this.sendMessage(connect, front);
 			}
 		}
+		else{
+			if(this.back.getPort().equals(msg.getNode().getPort())){
+				return;
+			}
+			NodeInfo oldBack = this.back;
+			this.setBack(msg.getNode());
+			Message confirm = new Message(MessageType.CONFIRM, this.self);
+			this.sendMessage(confirm, this.back);
+			Message switchMessage = new Message(MessageType.SWITCH, this.back);
+			this.sendMessage(switchMessage, oldBack);
+		}
 	}
 
 
-	private void handleSwitch(Message msg) {
+	private void handleConfirm(Message msg){
+		if(this.front == null){
+			this.front = msg.getNode();
+			Message connect = new Message(MessageType.CONNECT, this.self);
+			this.sendMessage(connect, front);
+		}
+	}
+
+
+	private void handleSwitchFront(Message msg) {
 		this.front = msg.getNode();
-		Message confirmMessage = new Message(MessageType.CONFIRM, this.self, true);
+		Message confirmMessage = new Message(MessageType.CONNECT, this.self);
 		this.sendMessage(confirmMessage, this.front);
 	}
 
@@ -71,17 +85,27 @@ public class Node {
 		System.out.println();
 	}
 
+	private void setBack(NodeInfo back) {
+		this.back = back;
+	}
 
-	void startNodeThreads(Message msg) throws IOException {
-		if(msg.getPort() != 0){
-			Socket s = new Socket(msg.getNode().getIp(), msg.getPort());
-			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-			out.writeObject(msg);
-		}
+
+	@Override
+	public void run() {
 		while(true) {
-			new MessageHandler(serverSocket.accept()).start();
+			try {
+				Socket s = serverSocket.accept();
+				new MessageHandler(s).start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-    }
+	}
+
+	void connect(NodeInfo sender, NodeInfo receiver) {
+		Message msg = new Message(MessageType.CONNECT, sender);
+		this.sendMessage(msg, receiver);
+	}
 
 	class MessageHandler extends Thread {
 		Socket s;
@@ -101,14 +125,17 @@ public class Node {
 						handleConnect(msg);
 						break;
 					case SWITCH:
-						handleSwitch(msg);
+						handleSwitchFront(msg);
 						break;
 					case CONFIRM:
 						handleConfirm(msg);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
+						break;
 				}
+				DataOutputStream response = new DataOutputStream(s.getOutputStream());
+				response.writeBoolean(true);
 				s.close();
 				in.close();
 			} catch (IOException | ClassNotFoundException e1) {

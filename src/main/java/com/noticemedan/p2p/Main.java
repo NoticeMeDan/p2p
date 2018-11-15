@@ -10,16 +10,21 @@ public class Main {
         System.out.println(type);
         Node node;
         try {
+            int port = Integer.parseInt(args[0]);
+            String ip = InetAddress.getLocalHost().getHostAddress();
         switch (type){
             case CREATE_FIRST:
-                node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
+                node = new Node(ip, port);
+                new Thread(node).start();
                 node.printNodeInformation();
-                node.startNodeThreads(new Message(MessageType.CONNECT));
                 break;
             case CREATE_NODE:
-                node = new Node(Integer.parseInt(args[0]), InetAddress.getLocalHost().getHostAddress());
-                NodeInfo info = new NodeInfo( args[1], Integer.parseInt(args[2]));
-                node.startNodeThreads(new Message(MessageType.CONNECT, info, Integer.parseInt(args[0])));
+                node = new Node(ip, port);
+                new Thread(node).start();
+                node.printNodeInformation();
+                NodeInfo info = new NodeInfo(ip, port);
+                NodeInfo receiver = new NodeInfo(args[1], Integer.parseInt(args[2]));
+                node.connect(info, receiver);
             case PUT:
                 break;
             case GET:
