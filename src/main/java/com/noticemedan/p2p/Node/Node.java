@@ -21,10 +21,19 @@ public class Node implements Runnable {
 	private NodeInfo back;
 
 
-	public Node(String ip, Integer port) throws IOException {
+	public Node(String ip, Integer port) {
 		this.self = new NodeInfo(ip, port);
 		this.data = new Hashtable<>();
-		this.serverSocket = new ServerSocket(port);
+		this.startServerSocket(port);
+	}
+
+	private void startServerSocket(int port) {
+		try {
+			this.serverSocket = new ServerSocket(port);
+		}
+		catch(IOException e){
+			e.getMessage();
+		}
 	}
 
 	private void sendMessage(Message msg, NodeInfo receiver){

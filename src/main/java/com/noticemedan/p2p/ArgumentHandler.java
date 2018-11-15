@@ -16,7 +16,7 @@ public class ArgumentHandler {
 
 
         if(createNew.matcher(argumentString).matches())
-            return CommandType.CREATE_FIRST_NODE;
+            return CommandType.CREATE_NETWORK;
         if(createNode.matcher(argumentString).matches())
             return CommandType.CREATE_NODE;
         if(put.matcher(argumentString).matches())
