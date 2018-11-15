@@ -40,19 +40,14 @@ public class Node {
 		//If we're connecting for the first time
 		if (this.front == null && this.back == null) {
 			this.connectBoth(msg);
-			NodeInfo receiver  = new NodeInfo(senderIP, msg.getPort());
+			NodeInfo receiver  = new NodeInfo(senderIP, msg.getNodeInfo().getPort());
 			Message confirmMsg = new Message(MessageType.CONFIRM, this.self);
+			System.out.println("ME: " + this.self);
+			System.out.println("Receiver: "+receiver);
 			this.sendMessage(confirmMsg, receiver);
 		} 
 		else {
 			this.back = msg.getNodeInfo();
-			NodeInfo confirmReceiver  = new NodeInfo(senderIP, msg.getPort());
-			Message confirmMsg = new Message(MessageType.CONFIRM, this.self);
-			this.sendMessage(confirmMsg, confirmReceiver);
-
-			NodeInfo switchReceiver = this.front;
-			Message switchMessage = new Message(MessageType.SWITCH, confirmReceiver);
-			this.sendMessage(switchMessage, switchReceiver);
 		}
 	}
 
@@ -62,6 +57,9 @@ public class Node {
 		}
 		else{
 			this.back = msg.getNodeInfo();
+			NodeInfo switchReceiver = this.front;
+			Message switchMessage = new Message(MessageType.SWITCH, this.back);
+			this.sendMessage(switchMessage, switchReceiver);
 		}
 	}
 
@@ -73,7 +71,7 @@ public class Node {
 
 	private void handleSwitch(Message msg) {
 		this.back = msg.getNodeInfo();
-		this.sendMessage(new Message(MessageType.CONNECT, this.self), this.front);
+		this.sendMessage(new Message(MessageType.CONNECT, this.self), this.back);
 	}
 
 	
@@ -105,7 +103,7 @@ public class Node {
 
 		@Override
 		public void run() {
-			printNodeInformation();
+
 			try {
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
@@ -128,6 +126,7 @@ public class Node {
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
+			printNodeInformation();
 		}
 	}
 

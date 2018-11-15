@@ -17,7 +17,7 @@ public class Message implements Serializable {
 		this.port = port;
 	}
 
-	public Message(MessageType type, NodeInfo backInfo) {
+	public Message(MessageType type, NodeInfo nodeInfo) {
 		this.type = type;
 		this.nodeInfo = nodeInfo;
 	}
