@@ -1,7 +1,4 @@
 package com.noticemedan.p2p.Message;
-
-import com.noticemedan.p2p.Message.Message;
-import com.noticemedan.p2p.Message.MessageType;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 public class DataMessage extends Message {

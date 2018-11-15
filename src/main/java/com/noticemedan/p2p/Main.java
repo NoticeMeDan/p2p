@@ -1,53 +1,54 @@
 package com.noticemedan.p2p;
 
+import com.noticemedan.p2p.Exceptions.InvalidPortException;
 import com.noticemedan.p2p.Node.Node;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.net.*;
+import java.util.Scanner;
+
+import static com.noticemedan.p2p.CommandType.*;
 
 public class Main {
 
     private static Node node;
 
     public static void main(String[] args) {
-        CommandType nodeType = ArgumentHandler.handle(args);
-        int port = Integer.parseInt(args[0]);
-        String localIp = getHostIp();
-        node = new Node(localIp, port);
+        if(args.length == 0){
+            printNodeGuidelines();
+            return;
+        }
 
-
-
-        switch (nodeType){
-            case CREATE_NETWORK:
-                new Thread(node).start();
-                break;
-            case CREATE_NODE:
-                new Thread(node).start();
-                NodeInfo info = new NodeInfo(localIp, port);
-                NodeInfo receiver = new NodeInfo(args[1], Integer.parseInt(args[2]));
+        try {
+            node = new Node(getHostIp(), parsePort(args[0]));
+            new Thread(node).start();
+            node.printNodeInformation();
+            CommandType command = ArgumentHandler.handle(args);
+            if (command.equals(CREATE_NODE)) {
+                NodeInfo info = node.getInfo();
+                NodeInfo receiver = new NodeInfo(args[1], parsePort(args[2]));
                 node.connect(info, receiver);
-                break;
-            default:
-                printNodeGuidelines();
-                break;
             }
-        node.printNodeInformation();
-        //Insert Scanner that calls get or put;
-        /**
-         *  CommandType type = ArgumentHandler.handle(args);
-         *  (Should be able to handle all request, maybe you'd like to close a node and start a new one)
-         *  case CREATE_NETWORK, case CREATE_NODE, case PUT, case GET
-         *
-         *  case PUT:
-         *                 NodeInfo putter = new NodeInfo(args[4], Integer.parseInt(args[5]));
-         *                 sendPut(Integer.parseInt(args[1]), args[2], putter);
-         *             case GET:
-         *                 NodeInfo client = new NodeInfo(ip, port);
-         *                 NodeInfo getter = new NodeInfo(args[2], Integer.parseInt(args[3]));
-         *                 sendGet(Integer.parseInt(args[1]), getter, client);
-         *                 break;
-         */
+            else if (!command.equals(CREATE_NETWORK))
+                printNodeGuidelines();
 
+            Scanner in = new Scanner(System.in);
+            while (in.hasNextLine()) {
+                String[] dataArgs = in.nextLine().split("");
+                command = ArgumentHandler.handle(dataArgs);
+                if (command.equals(PUT)) {
+                    NodeInfo putter = new NodeInfo(dataArgs[4], Integer.parseInt(args[5]));
+                    node.put(Integer.parseInt(args[1]), args[2], putter);
+                }
+                else if (command.equals(GET)) {
+                    NodeInfo client = node.getInfo();
+                    NodeInfo getter = new NodeInfo(args[2], Integer.parseInt(args[3]));
+                    node.get(parsePort(args[1]), getter, client);
+                }
+            }
+        }catch(InvalidPortException e){
+            System.out.println(e.getMessage());
+        }
     }
 
     private static String getHostIp() {
@@ -71,7 +72,7 @@ public class Main {
     }
 
     private static void printNodeGuidelines(){
-        System.out.println("Please use one of the following command formats:");
+        System.out.println("Please provide a valid argument:");
         System.out.println("################################################");
         System.out.println("New network: [your port]");
         System.out.println("New node:    [your port] [node ip] [node port]");
@@ -79,11 +80,18 @@ public class Main {
     }
 
     private static void printDataGuidelines(){
-        System.out.println("Please use one of the following command formats:");
+        System.out.println("Please provide a valid argument:");
         System.out.println("################################################");
         System.out.println("Put request: [your port] put [key] [value] [node ip] [node port]");
         System.out.println("Get request: [your port] get [key] [node ip] [node port]");
         System.out.println("################################################");
+    }
 
+    public static Integer parsePort(String text) throws InvalidPortException {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            throw new InvalidPortException("Please provide a valid port");
+        }
     }
 }

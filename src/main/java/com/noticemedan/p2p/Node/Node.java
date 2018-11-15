@@ -15,7 +15,11 @@ public class Node implements Runnable {
 	private ObjectOutputStream out;
 
 	private Hashtable<Integer, String> data;
-	//private Hashtable<Integer, String> backup;
+
+	public NodeInfo getInfo() {
+		return self;
+	}
+
 	private NodeInfo self;
 	private NodeInfo front;
 	private NodeInfo back;
@@ -124,6 +128,12 @@ public class Node implements Runnable {
 		this.sendMessage(msg, receiver);
 	}
 
+	public void put(int parseInt, String arg, NodeInfo putter) {
+	}
+
+	public void get(Integer parsePort, NodeInfo getter, NodeInfo client) {
+	}
+
 	class MessageHandler extends Thread {
 		Socket s;
 
@@ -150,13 +160,12 @@ public class Node implements Runnable {
 						System.out.println("Unknown MessageType");
 						break;
 				}
-				DataOutputStream response = new DataOutputStream(s.getOutputStream());
-				response.writeBoolean(true);
 				s.close();
 				in.close();
 			} catch (IOException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			}
+			printNodeInformation();
 		}
 	}
 
