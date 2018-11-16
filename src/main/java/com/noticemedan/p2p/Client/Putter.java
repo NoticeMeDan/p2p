@@ -35,9 +35,9 @@ public class Putter{
             //Wait for an answer
             Socket s = clientSocket.accept();
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-            success = (boolean) in.readObject();
+            success = in.readBoolean();
 
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         System.out.println(success);
