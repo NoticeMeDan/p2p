@@ -23,7 +23,7 @@ public class Putter{
         boolean success = false;
 
         //Create a put message with the information of this Putter
-        Message msg = new DataMessage(MessageType.PUT, this.info, key, value);
+        Message msg = new DataMessage(MessageType.PUT, this.info, key, value, null);
         try {
             //Create the serverSocket for this client
             ServerSocket clientSocket = new ServerSocket(this.info.getPort());

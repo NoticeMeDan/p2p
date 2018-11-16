@@ -15,6 +15,7 @@ public class Node implements Runnable {
 	private ObjectOutputStream out;
 
 	private Hashtable<Integer, String> data;
+	private Hashtable<Integer, String> backup;
 
 	public NodeInfo getInfo() {
 		return self;
@@ -27,6 +28,7 @@ public class Node implements Runnable {
 	public Node(String ip, Integer port) {
 		this.self = new NodeInfo(ip, port);
 		this.data = new Hashtable<>();
+		this.backup = new Hashtable<>();
 		this.startServerSocket(port);
 	}
 
@@ -90,7 +92,8 @@ public class Node implements Runnable {
 	}
 
 	private void handleSwitchFront(Message msg) {
-		this.front = msg.getNode();
+		this.setFront(msg.getNode());
+		this.sendBackup(this.data);
 		Message confirmMessage = new Message(MessageType.CONNECT, this.self);
 		this.sendMessage(confirmMessage, this.front);
 	}
@@ -104,6 +107,10 @@ public class Node implements Runnable {
 
 	private void setBack(NodeInfo back) {
 		this.back = back;
+	}
+
+	public void setFront(NodeInfo front) {
+		this.front = front;
 	}
 
 	@Override
@@ -123,9 +130,6 @@ public class Node implements Runnable {
 		this.sendMessage(msg, receiver);
 	}
 
-	public void put(int key, String value, NodeInfo putter) {
-		System.out.println("put attempted" + key + value + putter);
-	}
 
 	class MessageHandler extends Thread {
 		Socket s;
@@ -150,10 +154,13 @@ public class Node implements Runnable {
 						handleConfirm(msg);
 						break;
 					case PUT:
-						sendSuccess(msg.getNode());
+						handlePut((DataMessage) msg);
 						break;
 					case GET:
-						handleGet(msg);
+						//handleGet(msg);
+						break;
+					case BACKUP:
+						handleBackup((DataMessage) msg);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
@@ -168,23 +175,52 @@ public class Node implements Runnable {
 		}
 	}
 
-	private void sendSuccess(NodeInfo receiver) {
+	private void sendSuccess(NodeInfo receiver, boolean result) {
 		try {
 			Socket sender = new Socket(receiver.getIp(), receiver.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(sender.getOutputStream());
-			out.writeBoolean(true);
+			out.writeBoolean(result);
 			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	private void handleBackup(DataMessage msg) {
+		if(msg.hasFullBackup()){
+			this.backup = msg.getBackupData();
+		}
+		else {
+			this.backup.put(msg.getKey(), msg.getValue());
+		}
+		System.out.println(this.backup.size());
+	}
+
 	private void handleGet(DataMessage msg) {
 		System.out.println(msg.toString());
 	}
 
-	private void handlePut(DataMessage msg) {
-		this.data.put(msg.getKey(), msg.getValue());
-		System.out.println("Successfully added to network");
+	public void handlePut(DataMessage msg) {
+		if((msg.getSize() == null || msg.getSize() < this.data.size()) && this.front != null){
+			msg.setSize(this.data.size());
+			this.sendMessage(msg, this.front);
+		}
+		else{
+			this.data.put(msg.getKey(), msg.getValue());
+			this.sendBackupPut(msg.getKey(), msg.getValue());
+			sendSuccess(msg.getNode(), true);
+		}
+	}
+
+	private void sendBackupPut(Integer key, String value){
+		if(this.front != null) {
+			DataMessage backupMessage = new DataMessage(MessageType.BACKUP, this.front, key, value, null);
+			this.sendMessage(backupMessage, this.front);
+		}
+	}
+
+	private void sendBackup(Hashtable data){
+		DataMessage backupMessage = new DataMessage(MessageType.BACKUP, this.front, data);
+		this.sendMessage(backupMessage, this.front);
 	}
 }
