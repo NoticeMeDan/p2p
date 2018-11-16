@@ -1,18 +1,29 @@
 package com.noticemedan.p2p.Message;
 import com.noticemedan.p2p.Node.NodeInfo;
 
+import java.util.Hashtable;
+
 public class DataMessage extends Message {
 
 
     private final String value;
     private final Integer key;
+    private final Hashtable<Integer, String> backupData;
     private Integer size;
 
-    public DataMessage(MessageType type, NodeInfo node, Integer key, String value, int size) {
+    public DataMessage(MessageType type, NodeInfo node, Integer key, String value, Integer size) {
         super(type, node);
         this.key = key;
         this.value = value;
         this.size = size;
+        this.backupData = null;
+    }
+
+    public DataMessage(MessageType type, NodeInfo node, Hashtable data) {
+        super(type, node);
+        value = null;
+        key = null;
+        this.backupData = data;
     }
 
     public Integer getKey() {
@@ -27,5 +38,13 @@ public class DataMessage extends Message {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public boolean hasFullBackup() {
+        return backupData != null;
+    }
+
+    public Hashtable<Integer, String> getBackupData() {
+        return backupData;
     }
 }

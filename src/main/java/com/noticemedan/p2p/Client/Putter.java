@@ -22,7 +22,7 @@ public class Putter{
     public boolean put(Integer key, String value, NodeInfo receiver) {
         boolean success = false;
         //Create a put message with the information of this Putter
-        Message msg = new DataMessage(MessageType.PUT, this.info, key, value, -1);
+        Message msg = new DataMessage(MessageType.PUT, this.info, key, value, null);
         try {
             //Create the serverSocket for this client
             ServerSocket clientSocket = new ServerSocket(this.info.getPort());
