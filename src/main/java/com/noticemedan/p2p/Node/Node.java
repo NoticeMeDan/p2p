@@ -128,7 +128,8 @@ public class Node implements Runnable {
 		this.sendMessage(msg, receiver);
 	}
 
-	public void put(int parseInt, String arg, NodeInfo putter) {
+	public void put(int key, String value, NodeInfo putter) {
+		System.out.println("put attempted" + key + value + putter);
 	}
 
 	public void get(Integer parsePort, NodeInfo getter, NodeInfo client) {

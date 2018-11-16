@@ -18,37 +18,42 @@ public class Main {
             printNodeGuidelines();
             return;
         }
-
         try {
-            node = new Node(getHostIp(), parsePort(args[0]));
-            new Thread(node).start();
             node.printNodeInformation();
-            CommandType command = ArgumentHandler.handle(args);
-            if (command.equals(CREATE_NODE)) {
-                NodeInfo info = node.getInfo();
-                NodeInfo receiver = new NodeInfo(args[1], parsePort(args[2]));
-                node.connect(info, receiver);
-            }
-            else if (!command.equals(CREATE_NETWORK))
-                printNodeGuidelines();
-
-            Scanner in = new Scanner(System.in);
-            while (in.hasNextLine()) {
-                String[] dataArgs = in.nextLine().split("");
-                command = ArgumentHandler.handle(dataArgs);
-                if (command.equals(PUT)) {
-                    NodeInfo putter = new NodeInfo(dataArgs[4], Integer.parseInt(args[5]));
+            CommandType commandType = ArgumentHandler.handle(args);
+            switch (commandType) {
+                case CREATE_NETWORK:
+                    createNodeThread(args[0]);
+                    break;
+                case CREATE_NODE:
+                    createNodeThread(args[0]);
+                    NodeInfo info = node.getInfo();
+                    NodeInfo receiver = new NodeInfo(args[1], parsePort(args[2]));
+                    node.connect(info, receiver);
+                    break;
+                case PUT:
+                    NodeInfo putter = new NodeInfo(args[4], Integer.parseInt(args[5]));
                     node.put(Integer.parseInt(args[1]), args[2], putter);
-                }
-                else if (command.equals(GET)) {
+                    break;
+                case GET:
                     NodeInfo client = node.getInfo();
                     NodeInfo getter = new NodeInfo(args[2], Integer.parseInt(args[3]));
                     node.get(parsePort(args[1]), getter, client);
-                }
+                    break;
+                case UNKNOWN:
+                    break;
+                default:
+                    break;
+
             }
         }catch(InvalidPortException e){
-            System.out.println(e.getMessage());
+            e.getMessage();
         }
+    }
+
+    private static void createNodeThread(String a) throws InvalidPortException{
+        node = new Node(getHostIp(), parsePort(a));
+        new Thread(node).start();
     }
 
     private static String getHostIp() {
