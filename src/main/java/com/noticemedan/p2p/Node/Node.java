@@ -127,9 +127,6 @@ public class Node implements Runnable {
 		this.sendMessage(msg, receiver);
 	}
 
-	public void put(int key, String value, NodeInfo putter) {
-		System.out.println("put attempted" + key + value + putter);
-	}
 
 
 
@@ -156,7 +153,7 @@ public class Node implements Runnable {
 						handleConfirm(msg);
 						break;
 					case PUT:
-						sendSuccess(msg.getNode());
+						handlePut((DataMessage) msg);
 						break;
 					case GET:
 						break;
@@ -188,10 +185,11 @@ public class Node implements Runnable {
 		System.out.println();
 	}
 
-	private void handlePut(DataMessage msg) {
-		this.data.put(msg.getKey(), msg.getValue());
-		System.out.println("Successfully added to network");
+	public void handlePut(DataMessage msg) {
+		if(msg.getSize() < 0){
+
+		}
+
+			sendSuccess(msg.getNode());
 	}
-
-
 }
