@@ -157,7 +157,7 @@ public class Node implements Runnable {
 						handlePut((DataMessage) msg);
 						break;
 					case GET:
-						//handleGet(msg);
+						handleGet((DataMessage) msg);
 						break;
 					case BACKUP:
 						handleBackup((DataMessage) msg);
@@ -197,6 +197,8 @@ public class Node implements Runnable {
 	}
 
 	private void handleGet(DataMessage msg) {
+		// TODO: Create "not found"
+		// TODO: Figure out what to do when a PUT has been overwritten
 		System.out.println(msg.toString());
 	}
 

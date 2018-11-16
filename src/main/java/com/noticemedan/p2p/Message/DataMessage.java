@@ -24,6 +24,13 @@ public class DataMessage extends Message {
         this.backupData = data;
     }
 
+    public DataMessage(MessageType type, NodeInfo node, Integer key) {
+        super(type, node);
+        this.key = key;
+        this.value = null;
+        this.backupData = null;
+    }
+
     public Integer getKey() {
         return key;
     }

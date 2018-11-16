@@ -20,7 +20,7 @@ public class Getter {
     }
 
     public String get(Integer key, NodeInfo receiver) {
-        Message msg = new DataMessage(MessageType.GET, this.info, key, null);
+        Message msg = new DataMessage(MessageType.GET, this.info, key);
         try {
             ServerSocket clientSocket = new ServerSocket(this.info.getPort());
 
