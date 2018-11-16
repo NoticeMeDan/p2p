@@ -5,9 +5,11 @@ import java.util.regex.Pattern;
 public class ArgumentHandler {
 
     public static CommandType handle(String[] args){
+        if(args.length == 0)
+            return CommandType.UNKNOWN;
+
         String argumentString = String.join(" ", args);
 
-        //PUT GET NEEDS IP
         Pattern createNew = Pattern.compile("(?<createNew>[0-9]+){1}", Pattern.MULTILINE);
         Pattern createNode = Pattern.compile("^(?<createNode>[0-9]+ [0-9\\.]+ [0-9]+)$", Pattern.MULTILINE);
         Pattern put = Pattern.compile("(?<put>[0-9]+ put [0-9]+ [a-zA-ZæøåÆØÅ]+ [0-9\\.]+ [0-9]+){1}", Pattern.MULTILINE);

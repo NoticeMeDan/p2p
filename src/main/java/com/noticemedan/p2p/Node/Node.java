@@ -155,6 +155,11 @@ public class Node implements Runnable {
 					case CONFIRM:
 						handleConfirm(msg);
 						break;
+					case PUT:
+						sendSuccess(msg.getNode());
+						break;
+					case GET:
+						break;
 					default:
 						System.out.println("Unknown MessageType");
 						break;
@@ -165,6 +170,17 @@ public class Node implements Runnable {
 				e1.printStackTrace();
 			}
 			printNodeInformation();
+		}
+	}
+
+	private void sendSuccess(NodeInfo receiver) {
+		try {
+			Socket sender = new Socket(receiver.getIp(), receiver.getPort());
+			ObjectOutputStream out = new ObjectOutputStream(sender.getOutputStream());
+			out.writeBoolean(true);
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 

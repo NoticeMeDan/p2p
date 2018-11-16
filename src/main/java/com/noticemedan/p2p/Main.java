@@ -13,15 +13,12 @@ public class Main {
     private static Node node;
 
     public static void main(String[] args) {
-        if(args.length == 0){
-            printArgumentGuidelines();
-            return;
-        }
         try {
             CommandType commandType = ArgumentHandler.handle(args);
             switch (commandType) {
                 case CREATE_NETWORK:
                     createNodeThread(args[0]);
+                    node.printNodeInformation();
                     break;
                 case CREATE_NODE:
                     createNodeThread(args[0]);
@@ -30,13 +27,14 @@ public class Main {
                     node.connect(info, receiver);
                     break;
                 case PUT:
-                    Client putter = new Putter(args[4], parsePort(args[5]));
+                    Putter putter = new Putter(new NodeInfo(getHostIp(), parsePort(args[0])));
+                    NodeInfo putReceiver = new NodeInfo(args[4], parsePort(args[5]));
                     //Make put async? wait for response and get boolean from put if inserted?
-                    //boolean success = putter.put(parseKey(args[2]), args[3]);
+                    boolean success = putter.put(parseKey(args[2]), args[3], putReceiver);
                     break;
                 case GET:
-                    NodeInfo getterNode = new NodeInfo(args[2], parseKey(args[3]));
-                    Client client = new Getter(getHostIp(), parsePort(args[0]));
+                    NodeInfo getter = new NodeInfo(args[2], parseKey(args[3]));
+                    Getter client = new Getter(new NodeInfo(getHostIp(), parsePort(args[0])));
                     //Make get async? then wait until an answer in the client that runs? Make Getter threaded?
                     //String value = getter.get(parsePort(args[1]), getter);
                     break;
