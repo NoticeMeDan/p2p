@@ -110,7 +110,6 @@ public class Node implements Runnable {
 		this.back = back;
 	}
 
-
 	@Override
 	public void run() {
 		while(true) {
@@ -132,8 +131,7 @@ public class Node implements Runnable {
 		System.out.println("put attempted" + key + value + putter);
 	}
 
-	public void get(Integer parsePort, NodeInfo getter, NodeInfo client) {
-	}
+
 
 	class MessageHandler extends Thread {
 		Socket s;
