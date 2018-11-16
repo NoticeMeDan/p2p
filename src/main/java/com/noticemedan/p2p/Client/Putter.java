@@ -1,13 +1,10 @@
 package com.noticemedan.p2p.Client;
 
 
-public class Putter {
-    private String ip;
-    private int port;
+public class Putter extends Client {
 
     public Putter(String ip, Integer port) {
-        this.ip = ip;
-        this.port = port;
+        super(ip, port);
     }
 
     public boolean put(Integer parseKey, String arg) {

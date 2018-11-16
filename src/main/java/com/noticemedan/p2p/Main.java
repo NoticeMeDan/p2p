@@ -1,7 +1,6 @@
 package com.noticemedan.p2p;
 
-import com.noticemedan.p2p.Client.Getter;
-import com.noticemedan.p2p.Client.Putter;
+import com.noticemedan.p2p.Client.*;
 import com.noticemedan.p2p.Exceptions.InvalidDataKeyException;
 import com.noticemedan.p2p.Exceptions.InvalidPortException;
 import com.noticemedan.p2p.Node.Node;
@@ -31,13 +30,13 @@ public class Main {
                     node.connect(info, receiver);
                     break;
                 case PUT:
-                    Putter putter = new Putter(args[4], parsePort(args[5]));
+                    Client putter = new Putter(args[4], parsePort(args[5]));
                     //Make put async? wait for response and get boolean from put if inserted?
                     //boolean success = putter.put(parseKey(args[2]), args[3]);
                     break;
                 case GET:
                     NodeInfo getterNode = new NodeInfo(args[2], parseKey(args[3]));
-                    Getter client = new Getter(getHostIp(), parsePort(args[0]));
+                    Client client = new Getter(getHostIp(), parsePort(args[0]));
                     //Make get async? then wait until an answer in the client that runs? Make Getter threaded?
                     //String value = getter.get(parsePort(args[1]), getter);
                     break;

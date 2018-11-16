@@ -1,16 +1,12 @@
 package com.noticemedan.p2p.Client;
 
 import com.noticemedan.p2p.Node.NodeInfo;
-import jdk.jshell.spi.ExecutionControl;
 
-public class Getter {
+public class Getter extends Client {
 
-    private String ip;
-    private int port;
 
     public Getter(String ip, Integer port) {
-        this.ip = ip;
-        this.port = port;
+        super(ip, port);
     }
 
     public String get(Integer parsePort, NodeInfo getter, NodeInfo client) {
