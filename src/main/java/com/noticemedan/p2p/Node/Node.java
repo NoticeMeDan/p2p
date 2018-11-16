@@ -198,8 +198,15 @@ public class Node implements Runnable {
 
 	private void handleGet(DataMessage msg) {
 		// TODO: Create "not found"
-		// TODO: Figure out what to do when a PUT has been overwritten
 		System.out.println(msg.toString());
+		String value = this.data.get(msg.getKey());
+
+		if (value == null) {
+			this.sendMessage(msg, this.front);
+		} else {
+			Message reply = new DataMessage(MessageType.PUT, this.getInfo(), msg.getKey(), value);
+			this.sendMessage(reply, msg.getNode());
+		}
 	}
 
 	public void handlePut(DataMessage msg) {

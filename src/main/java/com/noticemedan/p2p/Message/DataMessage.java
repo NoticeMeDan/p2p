@@ -17,10 +17,19 @@ public class DataMessage extends Message {
         this.backupData = null;
     }
 
+    public DataMessage(MessageType type, NodeInfo node, Integer key, String value) {
+        super(type, node);
+        this.key = key;
+        this.value = value;
+        this.size = null;
+        this.backupData = null;
+    }
+
     public DataMessage(MessageType type, NodeInfo node, Hashtable data) {
         super(type, node);
         value = null;
         key = null;
+        this.size = null;
         this.backupData = data;
     }
 
@@ -28,6 +37,7 @@ public class DataMessage extends Message {
         super(type, node);
         this.key = key;
         this.value = null;
+        this.size = null;
         this.backupData = null;
     }
 
