@@ -6,7 +6,7 @@ public class DataMessage extends Message {
 
     private final String value;
     private final Integer key;
-    private final Integer size;
+    private Integer size;
 
     public DataMessage(MessageType type, NodeInfo node, Integer key, String value, int size) {
         super(type, node);
@@ -25,4 +25,7 @@ public class DataMessage extends Message {
 
     public Integer getSize() { return size; }
 
+    public void setSize(int size) {
+        this.size = size;
+    }
 }

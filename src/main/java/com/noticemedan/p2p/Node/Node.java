@@ -170,11 +170,11 @@ public class Node implements Runnable {
 		}
 	}
 
-	private void sendSuccess(NodeInfo receiver) {
+	private void sendSuccess(NodeInfo receiver, boolean result) {
 		try {
 			Socket sender = new Socket(receiver.getIp(), receiver.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(sender.getOutputStream());
-			out.writeBoolean(true);
+			out.writeBoolean(result);
 			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -186,10 +186,14 @@ public class Node implements Runnable {
 	}
 
 	public void handlePut(DataMessage msg) {
-		if(msg.getSize() < 0){
-
+		if((msg.getSize() < 0 || msg.getSize() < this.data.size()) && this.front != null){
+			msg.setSize(this.data.size());
+			this.sendMessage(msg, this.front);
+		}
+		else{
+			this.data.put(msg.getKey(), msg.getValue());
+			sendSuccess(msg.getNode(), true);
 		}
 
-			sendSuccess(msg.getNode());
 	}
 }
