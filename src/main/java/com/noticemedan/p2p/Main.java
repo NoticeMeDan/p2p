@@ -5,9 +5,6 @@ import com.noticemedan.p2p.Node.Node;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.net.*;
-import java.util.Scanner;
-
-import static com.noticemedan.p2p.CommandType.*;
 
 public class Main {
 
@@ -15,11 +12,10 @@ public class Main {
 
     public static void main(String[] args) {
         if(args.length == 0){
-            printNodeGuidelines();
+            printArgumentGuidelines();
             return;
         }
         try {
-            node.printNodeInformation();
             CommandType commandType = ArgumentHandler.handle(args);
             switch (commandType) {
                 case CREATE_NETWORK:
@@ -41,10 +37,10 @@ public class Main {
                     node.get(parsePort(args[1]), getter, client);
                     break;
                 case UNKNOWN:
+                    printArgumentGuidelines();
                     break;
                 default:
-                    break;
-
+                    printArgumentGuidelines();
             }
         }catch(InvalidPortException e){
             e.getMessage();
@@ -76,21 +72,16 @@ public class Main {
         return null;
     }
 
-    private static void printNodeGuidelines(){
+    private static void printArgumentGuidelines(){
         System.out.println("Please provide a valid argument:");
         System.out.println("################################################");
         System.out.println("New network: [your port]");
         System.out.println("New node:    [your port] [node ip] [node port]");
-        System.out.println("################################################");
-    }
-
-    private static void printDataGuidelines(){
-        System.out.println("Please provide a valid argument:");
-        System.out.println("################################################");
         System.out.println("Put request: [your port] put [key] [value] [node ip] [node port]");
         System.out.println("Get request: [your port] get [key] [node ip] [node port]");
         System.out.println("################################################");
     }
+
 
     public static Integer parsePort(String text) throws InvalidPortException {
         try {
