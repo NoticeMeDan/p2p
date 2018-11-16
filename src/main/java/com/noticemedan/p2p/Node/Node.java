@@ -24,7 +24,6 @@ public class Node implements Runnable {
 	private NodeInfo front;
 	private NodeInfo back;
 
-
 	public Node(String ip, Integer port) {
 		this.self = new NodeInfo(ip, port);
 		this.data = new Hashtable<>();
@@ -82,7 +81,6 @@ public class Node implements Runnable {
 		}
 	}
 
-
 	private void handleConfirm(Message msg){
 		if(this.front == null){
 			this.front = msg.getNode();
@@ -91,14 +89,12 @@ public class Node implements Runnable {
 		}
 	}
 
-
 	private void handleSwitchFront(Message msg) {
 		this.front = msg.getNode();
 		Message confirmMessage = new Message(MessageType.CONNECT, this.self);
 		this.sendMessage(confirmMessage, this.front);
 	}
 
-	
 	public void printNodeInformation() {
 		System.out.println("This: " + this.self.getIp() + ", " + this.self.getPort());
 		System.out.println("Front: " + this.front);
@@ -131,8 +127,6 @@ public class Node implements Runnable {
 		System.out.println("put attempted" + key + value + putter);
 	}
 
-
-
 	class MessageHandler extends Thread {
 		Socket s;
 
@@ -159,6 +153,7 @@ public class Node implements Runnable {
 						sendSuccess(msg.getNode());
 						break;
 					case GET:
+						handleGet(msg);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
@@ -185,13 +180,11 @@ public class Node implements Runnable {
 	}
 
 	private void handleGet(DataMessage msg) {
-		System.out.println();
+		System.out.println(msg.toString());
 	}
 
 	private void handlePut(DataMessage msg) {
 		this.data.put(msg.getKey(), msg.getValue());
 		System.out.println("Successfully added to network");
 	}
-
-
 }

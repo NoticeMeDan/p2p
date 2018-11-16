@@ -2,8 +2,6 @@ package com.noticemedan.p2p.Message;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 public class DataMessage extends Message {
-
-
     private final String value;
     private final Integer key;
 
@@ -19,5 +17,13 @@ public class DataMessage extends Message {
 
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        return "DataMessage{" +
+                "value='" + value + '\'' +
+                ", key=" + key +
+                "} " + super.toString();
     }
 }

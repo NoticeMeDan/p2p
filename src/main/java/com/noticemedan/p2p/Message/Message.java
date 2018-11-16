@@ -7,7 +7,6 @@ import java.io.Serializable;
 public class Message implements Serializable{
 	private static final long serialVersionUID = 5L;
 
-
 	private NodeInfo node;
 	private MessageType type;
 
@@ -24,6 +23,11 @@ public class Message implements Serializable{
 		return node;
 	}
 
-
-
+	@Override
+	public String toString() {
+		return "Message{" +
+				"node=" + node +
+				", type=" + type +
+				'}';
+	}
 }

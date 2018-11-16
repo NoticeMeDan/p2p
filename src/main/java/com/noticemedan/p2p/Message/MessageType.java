@@ -8,5 +8,4 @@ public enum MessageType {
 	GET,
 	SUCCESS,
 	FAIL,
-
 }

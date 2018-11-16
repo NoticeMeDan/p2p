@@ -7,6 +7,7 @@ import com.noticemedan.p2p.Node.Node;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.net.*;
+import java.util.Arrays;
 
 public class Main {
 
@@ -33,10 +34,10 @@ public class Main {
                     boolean success = putter.put(parseKey(args[2]), args[3], putReceiver);
                     break;
                 case GET:
-                    NodeInfo getter = new NodeInfo(args[2], parseKey(args[3]));
-                    Getter client = new Getter(new NodeInfo(getHostIp(), parsePort(args[0])));
+                    Getter getter = new Getter(new NodeInfo(getHostIp(), parsePort(args[0])));
+                    NodeInfo getReceiver = new NodeInfo(args[3], parseKey(args[4]));
                     //Make get async? then wait until an answer in the client that runs? Make Getter threaded?
-                    //String value = getter.get(parsePort(args[1]), getter);
+                    System.out.println(getter.get(parseKey(args[2]), getReceiver));
                     break;
                 case UNKNOWN:
                     printArgumentGuidelines();
