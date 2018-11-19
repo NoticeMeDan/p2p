@@ -17,10 +17,6 @@ public class Node implements Runnable {
 	private Hashtable<Integer, String> data;
 	private Hashtable<Integer, String> backup;
 
-	public NodeInfo getInfo() {
-		return self;
-	}
-
 	private NodeInfo self;
 	private NodeInfo front;
 	private NodeInfo back;
@@ -91,6 +87,7 @@ public class Node implements Runnable {
 		}
 	}
 
+
 	private void handleSwitchFront(Message msg) {
 		this.setFront(msg.getNode());
 		this.sendBackup(this.data);
@@ -98,11 +95,16 @@ public class Node implements Runnable {
 		this.sendMessage(confirmMessage, this.front);
 	}
 
+	
 	public void printNodeInformation() {
 		System.out.println("This: " + this.self.getIp() + ", " + this.self.getPort());
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
 		System.out.println();
+	}
+
+	public NodeInfo getInfo() {
+		return self;
 	}
 
 	private void setBack(NodeInfo back) {

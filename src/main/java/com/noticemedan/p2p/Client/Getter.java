@@ -10,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class Getter {
 
@@ -39,8 +40,11 @@ public class Getter {
             }
 
             return answer.getValue();
-        } catch (IOException | ClassNotFoundException e) {
+        } catch(SocketException e) {
+            return null;//Handle TCP Error
+        }catch (IOException | ClassNotFoundException e) {
             return "An error occured: " + e.getMessage();
         }
+
     }
 }

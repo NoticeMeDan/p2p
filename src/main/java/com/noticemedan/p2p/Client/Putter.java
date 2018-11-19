@@ -2,7 +2,6 @@ package com.noticemedan.p2p.Client;
 import com.noticemedan.p2p.Message.DataMessage;
 import com.noticemedan.p2p.Message.Message;
 import com.noticemedan.p2p.Message.MessageType;
-import com.noticemedan.p2p.Node.Node;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.io.IOException;
@@ -10,6 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class Putter{
 
@@ -38,7 +38,10 @@ public class Putter{
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
             success = in.readBoolean();
 
-        } catch (IOException e) {
+        } catch (SocketException e) {
+            //Handle TCP Error
+        }  catch (IOException e) {
+            //Handle anything else
             e.printStackTrace();
         }
         System.out.println(success);
