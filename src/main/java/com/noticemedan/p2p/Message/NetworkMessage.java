@@ -31,7 +31,7 @@ public class NetworkMessage extends Message {
 		return type;
 	}
 
-	public List<NodeInfo> getOldFront() {
+	public List<NodeInfo> getNodes() {
 		return nodes;
 	}
 

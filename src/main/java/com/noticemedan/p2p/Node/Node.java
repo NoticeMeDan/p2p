@@ -44,6 +44,7 @@ public class Node implements Runnable {
 	 * @param receiver
 	 */
 	private void sendMessage(Message msg, NodeInfo receiver) throws RebuildingNetworkException {
+		System.out.println("Sending..:" + msg.getMessageType() + " to: " + receiver.getPort());
 		try {
 			Socket socket = new Socket(receiver.getIp(), receiver.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -52,21 +53,27 @@ public class Node implements Runnable {
 			out.close();
 		} catch (ConnectException | NoRouteToHostException e) {
 			rebuildNetwork(receiver);
-			throw new RebuildingNetworkException("Rebuilding Network", msg.getNode());
+			throw new RebuildingNetworkException("Rebuilding Network", receiver);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	private void rebuildNetwork(NodeInfo disconnectedNode){
-		ArrayList<NodeInfo> nodes = new ArrayList<>();
-		nodes.add(this.self);
+		List<NodeInfo> nodes = Arrays.asList(this.self, disconnectedNode);
 		boolean sendForward = disconnectedNode.equals(this.back);
 		Message msg = new NetworkMessage(NetworkMessageType.RECONNECT, nodes, sendForward);
 		try {
-			if (sendForward)
+			if (sendForward) {
+				this.setBack(null);
+				this.mergeBackupData();
+				this.sendBackup(data);
 				sendMessage(msg, this.front);
-			else sendMessage(msg, this.back);
+			}
+			else {
+				this.setFront(null);
+				sendMessage(msg, this.back);
+			}
 		}
 		//This is an indicator that more than one Node has crashed. We handle this by killing this process.
 		catch(RebuildingNetworkException e){
@@ -89,11 +96,13 @@ public class Node implements Runnable {
 		else{
 			if(this.back.getPort().equals(msg.getNode().getPort()))
 				return;
+
 			Message switchMessage = new NetworkMessage(NetworkMessageType.SWITCH, node);
 			this.sendMessage(switchMessage, this.back);
 
 			Message confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
 			this.sendMessage(confirm, node);
+
 			this.setBack(node);
 
 		}
@@ -111,20 +120,22 @@ public class Node implements Runnable {
 
 	private void handleReconnect(NetworkMessage msg) throws RebuildingNetworkException {
         if(msg.isForward()) {
-            if (msg.getOldFront().equals(this.back)) {
+            if (msg.getNodes().get(1).equals(this.front)) {
+                Message connectMessage = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
+                this.setFront(null);
+                this.sendMessage(connectMessage, msg.getNodes().get(0));
+            }
+            else{
+                this.sendMessage(msg, this.front);
+            }
+        } else{
+            if (msg.getNodes().get(1).equals(this.back)) {
                 Message connectMessage = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
+                this.setBack(null);
                 this.sendMessage(connectMessage, msg.getNode());
             }
             else{
                 this.sendMessage(msg, this.back);
-            }
-        } else{
-            if (msg.getOldFront().equals(this.front)) {
-                Message connectMessage = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
-                this.sendMessage(connectMessage, msg.getNode());
-            }
-            else{
-                this.sendMessage(msg, this.front);
             }
         }
 
@@ -224,6 +235,11 @@ public class Node implements Runnable {
 		this.sendMessage(backupMessage, this.front);
 	}
 
+	private void mergeBackupData() {
+		this.data.putAll(this.backup);
+		this.backup.clear();
+	}
+
 	/**
 	 * Inner Class used for interpreting all received messages on the ServerSocket.
 	 */
@@ -249,7 +265,7 @@ public class Node implements Runnable {
 						break;
 					case ERROR:
 						System.out.println("The Network is rebuilding, please try again...");
-						//Runtime.getRuntime().exit(0);
+						Runtime.getRuntime().exit(0);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
