@@ -3,10 +3,10 @@ package com.noticemedan.p2p.Node;
 import com.noticemedan.p2p.Message.DataMessage;
 import com.noticemedan.p2p.Message.Message;
 import com.noticemedan.p2p.Message.MessageType;
+import com.noticemedan.p2p.Message.ReconnectMessage;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.Hashtable;
 
 public class Node implements Runnable {
@@ -42,7 +42,12 @@ public class Node implements Runnable {
 			this.clientSocket = new Socket(receiver.getIp(), receiver.getPort());
 			this.out = new ObjectOutputStream(this.clientSocket.getOutputStream());
 			out.writeObject(msg);
-		} catch (IOException e) {
+		} catch (ConnectException | NoRouteToHostException e) {
+			handleNodeNotFound();
+			//Find new Front ( Send message to back until you get a message from your new front )
+		}
+
+		catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
@@ -52,6 +57,11 @@ public class Node implements Runnable {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private void handleNodeNotFound() {
+		Message msg = new ReconnectMessage(this.self, this.front);
+		sendMessage(msg, this.back);
 	}
 
 	private void handleConnect(Message msg) {
@@ -84,6 +94,17 @@ public class Node implements Runnable {
 			this.front = msg.getNode();
 			Message connect = new Message(MessageType.CONNECT, this.self);
 			this.sendMessage(connect, front);
+		}
+	}
+
+
+	private void handleReconnect(ReconnectMessage msg) {
+		if(msg.getOldFront().equals(this.back)){
+			Message connectMessage = new Message(MessageType.CONFIRM, this.self);
+			this.sendMessage(connectMessage, msg.getNode());
+		}
+		else{
+			this.sendMessage(msg, this.back);
 		}
 	}
 
@@ -164,6 +185,9 @@ public class Node implements Runnable {
 					case BACKUP:
 						handleBackup((DataMessage) msg);
 						break;
+					case RECONNECT:
+						handleReconnect((ReconnectMessage) msg);
+						break;
 					default:
 						System.out.println("Unknown MessageType");
 						break;
@@ -176,6 +200,7 @@ public class Node implements Runnable {
 			printNodeInformation();
 		}
 	}
+
 
 	private void sendSuccess(NodeInfo receiver, boolean result) {
 		try {

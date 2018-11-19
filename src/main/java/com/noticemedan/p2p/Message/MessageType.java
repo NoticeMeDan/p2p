@@ -6,5 +6,6 @@ public enum MessageType {
 	SWITCH,
 	PUT,
 	GET,
-	BACKUP
+	BACKUP,
+	RECONNECT,
 }
