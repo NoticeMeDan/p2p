@@ -1,8 +1,7 @@
 package com.noticemedan.p2p.Client;
 
 import com.noticemedan.p2p.Message.DataMessage;
-import com.noticemedan.p2p.Message.Message;
-import com.noticemedan.p2p.Message.MessageType;
+import com.noticemedan.p2p.Message.DataMessageType;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.io.IOException;
@@ -21,7 +20,7 @@ public class Getter {
     }
 
     public String get(Integer key, NodeInfo receiver) {
-        Message msg = new DataMessage(MessageType.GET, this.info, key);
+        DataMessage msg = new DataMessage(DataMessageType.GET, this.info, key);
         try {
             ServerSocket clientSocket = new ServerSocket(this.info.getPort());
 
@@ -35,7 +34,7 @@ public class Getter {
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
             DataMessage answer = (DataMessage) in.readObject();
 
-            if (!answer.getType().equals(MessageType.PUT)) {
+            if (!answer.getType().equals(DataMessageType.PUT)) {
                 return "Received a message, but it was not a PUT. Something is not right here.";
             }
 

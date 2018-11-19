@@ -4,30 +4,21 @@ import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.io.Serializable;
 
-public class Message implements Serializable{
-	private static final long serialVersionUID = 5L;
+public class Message implements Serializable {
+	private static final long serialVersionUID = 1L;
+	private final NodeInfo node;
+	private final MessageType type;
 
-	private NodeInfo node;
-	private MessageType type;
-
-	public Message(MessageType type, NodeInfo node) {
-		this.type = type;
+	public Message(NodeInfo node, MessageType type) {
 		this.node = node;
-	}
-
-	public MessageType getType() {
-		return type;
+		this.type = type;
 	}
 
 	public NodeInfo getNode() {
 		return node;
 	}
 
-	@Override
-	public String toString() {
-		return "Message{" +
-				"node=" + node +
-				", type=" + type +
-				'}';
+	public MessageType getMessageType() {
+		return type;
 	}
 }

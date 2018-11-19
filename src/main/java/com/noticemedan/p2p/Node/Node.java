@@ -1,9 +1,6 @@
 package com.noticemedan.p2p.Node;
 
-import com.noticemedan.p2p.Message.DataMessage;
-import com.noticemedan.p2p.Message.Message;
-import com.noticemedan.p2p.Message.MessageType;
-import com.noticemedan.p2p.Message.ReconnectMessage;
+import com.noticemedan.p2p.Message.*;
 
 import java.io.*;
 import java.net.*;
@@ -60,7 +57,7 @@ public class Node implements Runnable {
 	}
 
 	private void handleNodeNotFound() {
-		Message msg = new ReconnectMessage(this.self, this.front);
+		NetworkMessage msg = new NetworkMessage(NetworkMessageType.RECONNECT, this.self, this.front);
 		sendMessage(msg, this.back);
 	}
 
@@ -68,11 +65,11 @@ public class Node implements Runnable {
 		//The very first Node handled
 		if(this.back == null) {
 			this.back = msg.getNode();
-			Message confirm = new Message(MessageType.CONFIRM, this.self);
+			NetworkMessage confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
 			this.sendMessage(confirm, this.back);
 			if(this.front == null){
 				this.front = msg.getNode();
-				Message connect = new Message(MessageType.CONNECT, this.self);
+				NetworkMessage connect = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
 				this.sendMessage(connect, front);
 			}
 		}
@@ -82,9 +79,9 @@ public class Node implements Runnable {
 			}
 			NodeInfo oldBack = this.back;
 			this.setBack(msg.getNode());
-			Message confirm = new Message(MessageType.CONFIRM, this.self);
+			NetworkMessage confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
 			this.sendMessage(confirm, this.back);
-			Message switchMessage = new Message(MessageType.SWITCH, this.back);
+			NetworkMessage switchMessage = new NetworkMessage(NetworkMessageType.SWITCH, this.back);
 			this.sendMessage(switchMessage, oldBack);
 		}
 	}
@@ -92,15 +89,15 @@ public class Node implements Runnable {
 	private void handleConfirm(Message msg){
 		if(this.front == null){
 			this.front = msg.getNode();
-			Message connect = new Message(MessageType.CONNECT, this.self);
+			NetworkMessage connect = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
 			this.sendMessage(connect, front);
 		}
 	}
 
 
-	private void handleReconnect(ReconnectMessage msg) {
+	private void handleReconnect(NetworkMessage msg) {
 		if(msg.getOldFront().equals(this.back)){
-			Message connectMessage = new Message(MessageType.CONFIRM, this.self);
+			NetworkMessage connectMessage = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
 			this.sendMessage(connectMessage, msg.getNode());
 		}
 		else{
@@ -109,14 +106,14 @@ public class Node implements Runnable {
 	}
 
 
-	private void handleSwitchFront(Message msg) {
+	private void handleSwitchFront(NetworkMessage msg) {
 		this.setFront(msg.getNode());
 		this.sendBackup(this.data);
-		Message confirmMessage = new Message(MessageType.CONNECT, this.self);
+		NetworkMessage confirmMessage = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
 		this.sendMessage(confirmMessage, this.front);
 	}
 
-	
+
 	public void printNodeInformation() {
 		System.out.println("This: " + this.self.getIp() + ", " + this.self.getPort());
 		System.out.println("Front: " + this.front);
@@ -149,7 +146,7 @@ public class Node implements Runnable {
 	}
 
 	public void connect(NodeInfo sender, NodeInfo receiver) {
-		Message msg = new Message(MessageType.CONNECT, sender);
+		NetworkMessage msg = new NetworkMessage(NetworkMessageType.CONNECT, sender);
 		this.sendMessage(msg, receiver);
 	}
 
@@ -166,27 +163,12 @@ public class Node implements Runnable {
 			try {
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				Message msg = (Message) in.readObject();
-				switch (msg.getType()) {
-					case CONNECT:
-						handleConnect(msg);
+				switch (msg.getMessageType()) {
+					case DATA:
+						handleDataMessage(msg);
 						break;
-					case SWITCH:
-						handleSwitchFront(msg);
-						break;
-					case CONFIRM:
-						handleConfirm(msg);
-						break;
-					case PUT:
-						handlePut((DataMessage) msg);
-						break;
-					case GET:
-						handleGet((DataMessage) msg);
-						break;
-					case BACKUP:
-						handleBackup((DataMessage) msg);
-						break;
-					case RECONNECT:
-						handleReconnect((ReconnectMessage) msg);
+					case NETWORK:
+						handleNetworkMessage(msg);
 						break;
 					default:
 						System.out.println("Unknown MessageType");
@@ -198,6 +180,45 @@ public class Node implements Runnable {
 				e1.printStackTrace();
 			}
 			printNodeInformation();
+		}
+
+		public void handleNetworkMessage(Message message) {
+			NetworkMessage msg = (NetworkMessage) message;
+			switch (msg.getType()) {
+				case CONNECT:
+					handleConnect(msg);
+					break;
+				case SWITCH:
+					handleSwitchFront(msg);
+					break;
+				case CONFIRM:
+					handleConfirm(msg);
+					break;
+				case RECONNECT:
+					handleReconnect(msg);
+					break;
+				default:
+					System.out.println("Unknown NetworkMessageType");
+					break;
+			}
+		}
+
+		public void handleDataMessage(Message message) {
+			DataMessage msg = (DataMessage) message;
+			switch (msg.getType()) {
+				case PUT:
+					handlePut(msg);
+					break;
+				case GET:
+					handleGet(msg);
+					break;
+				case BACKUP:
+					handleBackup(msg);
+					break;
+				default:
+					System.out.println("Unknown DataMessageType");
+					break;
+			}
 		}
 	}
 
@@ -231,7 +252,7 @@ public class Node implements Runnable {
 		if (value == null) {
 			this.sendMessage(msg, this.front);
 		} else {
-			Message reply = new DataMessage(MessageType.PUT, this.getInfo(), msg.getKey(), value);
+			Message reply = new DataMessage(DataMessageType.PUT, this.getInfo(), msg.getKey(), value);
 			this.sendMessage(reply, msg.getNode());
 		}
 	}
@@ -250,13 +271,13 @@ public class Node implements Runnable {
 
 	private void sendBackupPut(Integer key, String value){
 		if(this.front != null) {
-			DataMessage backupMessage = new DataMessage(MessageType.BACKUP, this.front, key, value, null);
+			DataMessage backupMessage = new DataMessage(DataMessageType.BACKUP, this.front, key, value, null);
 			this.sendMessage(backupMessage, this.front);
 		}
 	}
 
 	private void sendBackup(Hashtable data){
-		DataMessage backupMessage = new DataMessage(MessageType.BACKUP, this.front, data);
+		DataMessage backupMessage = new DataMessage(DataMessageType.BACKUP, this.front, data);
 		this.sendMessage(backupMessage, this.front);
 	}
 }

@@ -1,7 +1,6 @@
 package com.noticemedan.p2p.Client;
 import com.noticemedan.p2p.Message.DataMessage;
-import com.noticemedan.p2p.Message.Message;
-import com.noticemedan.p2p.Message.MessageType;
+import com.noticemedan.p2p.Message.DataMessageType;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.io.IOException;
@@ -23,7 +22,7 @@ public class Putter{
         boolean success = false;
 
         //Create a put message with the information of this Putter
-        Message msg = new DataMessage(MessageType.PUT, this.info, key, value, null);
+        DataMessage msg = new DataMessage(DataMessageType.PUT, this.info, key, value, null);
         try {
             //Create the serverSocket for this client
             ServerSocket clientSocket = new ServerSocket(this.info.getPort());
