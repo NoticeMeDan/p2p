@@ -44,7 +44,6 @@ public class Node implements Runnable {
 	 * @param receiver
 	 */
 	private void sendMessage(Message msg, NodeInfo receiver) throws RebuildingNetworkException {
-		System.out.println("Sending..:" + msg.getMessageType() + " to: " + receiver.getPort());
 		try {
 			Socket socket = new Socket(receiver.getIp(), receiver.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
@@ -90,8 +89,10 @@ public class Node implements Runnable {
 			NetworkMessage confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
 			this.sendMessage(confirm, node);
 			this.setBack(node);
-			if(front == null)
+			if(front == null) {
 				handleConfirm(msg);
+				this.sendBackup(this.data);
+			}
 		}
 		else{
 			if(this.back.getPort().equals(msg.getNode().getPort()))
@@ -154,6 +155,8 @@ public class Node implements Runnable {
 		System.out.println("This: " + this.self.getIp() + ", " + this.self.getPort());
 		System.out.println("Front: " + this.front);
 		System.out.println("Back: " + this.back);
+		System.out.println("Data: " + this.data);
+		System.out.println("Backup: " + this.backup);
 		System.out.println();
 	}
 
@@ -178,7 +181,7 @@ public class Node implements Runnable {
 
 
 
-	private void sendSuccess(NodeInfo receiver, boolean result) {
+	private void sendResult(NodeInfo receiver, boolean result) {
 		try {
 			Socket sender = new Socket(receiver.getIp(), receiver.getPort());
 			ObjectOutputStream out = new ObjectOutputStream(sender.getOutputStream());
@@ -199,15 +202,21 @@ public class Node implements Runnable {
 	}
 
 	private void handleGet(DataMessage msg) throws RebuildingNetworkException {
-		// TODO: Create "not found"
-		System.out.println(msg.toString());
-		String value = this.data.get(msg.getKey());
+		NodeInfo receiver = msg.getOriginalReceiver();
+		if(receiver != null && receiver.equals(this.getInfo())) {
+			this.sendResult(msg.getNode(), false);
+		}
+		else {
+			if(receiver == null)
+				msg.setReceiver(this.getInfo());
 
-		if (value == null) {
-			this.sendMessage(msg, this.front);
-		} else {
-			Message reply = new DataMessage(DataMessageType.PUT, this.getInfo(), msg.getKey(), value);
-			this.sendMessage(reply, msg.getNode());
+			String value = this.data.get(msg.getKey());
+			if (value == null) {
+				this.sendMessage(msg, this.front);
+			} else {
+				Message reply = new DataMessage(DataMessageType.PUT, this.getInfo(), msg.getKey(), value);
+				this.sendMessage(reply, msg.getNode());
+			}
 		}
 	}
 
@@ -219,7 +228,7 @@ public class Node implements Runnable {
 		else{
 			this.data.put(msg.getKey(), msg.getValue());
 			this.sendBackupPut(msg.getKey(), msg.getValue());
-			sendSuccess(msg.getNode(), true);
+			sendResult(msg.getNode(), true);
 		}
 	}
 
@@ -265,6 +274,7 @@ public class Node implements Runnable {
 						break;
 					case ERROR:
 						System.out.println("The Network is rebuilding, please try again...");
+						serverSocket.close();
 						Runtime.getRuntime().exit(0);
 						break;
 					default:

@@ -31,13 +31,14 @@ public class Main {
                 case PUT:
                     Putter putter = new Putter(new NodeInfo(getHostIp(), parsePort(args[0])));
                     NodeInfo putReceiver = new NodeInfo(args[4], parsePort(args[5]));
-                    //Make put async? wait for response and get boolean from put if inserted?
                     boolean success = putter.put(parseKey(args[2]), args[3], putReceiver);
+                    if(success)
+                        System.out.println("Put succesful");
+                    else System.out.println("Could not insert into network");
                     break;
                 case GET:
                     Getter getter = new Getter(new NodeInfo(getHostIp(), parsePort(args[0])));
                     NodeInfo getReceiver = new NodeInfo(args[3], parseKey(args[4]));
-                    //Make get async? then wait until an answer in the client that runs? Make Getter threaded?
                     System.out.println(getter.get(parseKey(args[2]), getReceiver));
                     break;
                 case UNKNOWN:
@@ -58,6 +59,8 @@ public class Main {
         new Thread(node).start();
     }
 
+    /*  Very specific command for getting the local IP. This checks for operating system
+        and gets the IP with the appropriate command for that system. */
     private static String getHostIp() {
         String os = System.getProperty("os.name");
         if(os.equals("Mac OS X")){

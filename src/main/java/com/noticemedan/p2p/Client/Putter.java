@@ -43,7 +43,6 @@ public class Putter{
             //Handle anything else
             e.printStackTrace();
         }
-        System.out.println(success);
         return success;
     }
 }

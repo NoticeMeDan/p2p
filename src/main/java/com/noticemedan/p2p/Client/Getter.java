@@ -1,12 +1,15 @@
 package com.noticemedan.p2p.Client;
 
 import com.noticemedan.p2p.Message.DataMessage;
+import com.noticemedan.p2p.Message.Message;
 import com.noticemedan.p2p.Message.enums.DataMessageType;
 import com.noticemedan.p2p.Node.NodeInfo;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OptionalDataException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -32,18 +35,19 @@ public class Getter {
             //Wait for an answer
             Socket s = clientSocket.accept();
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-            DataMessage answer = (DataMessage) in.readObject();
-
-            if (!answer.getType().equals(DataMessageType.PUT)) {
-                return "Received a message, but it was not a PUT. Something is not right here.";
+            try{
+                DataMessage message = (DataMessage) in.readObject();
+                return message.getValue();
+            }catch(OptionalDataException e){
+                if(!in.readBoolean())
+                    return "The item could not be found";
             }
 
-            return answer.getValue();
         } catch(SocketException e) {
-            return null;//Handle TCP Error
+            return "There was a connection error. Please try again.";//Handle TCP Error
         }catch (IOException | ClassNotFoundException e) {
             return "An error occured: " + e.getMessage();
         }
-
+        return null;
     }
 }

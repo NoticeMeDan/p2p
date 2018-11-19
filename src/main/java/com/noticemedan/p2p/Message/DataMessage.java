@@ -11,6 +11,7 @@ public class DataMessage extends Message {
     private final Integer key;
     private final Hashtable<Integer, String> backupData;
     private Integer size;
+    private NodeInfo receiver;
 
     public DataMessage(DataMessageType type, NodeInfo node, Integer key, String value, Integer size) {
         super(node, MessageType.DATA);
@@ -84,5 +85,12 @@ public class DataMessage extends Message {
 
     public void setSize(Integer size) {
         this.size = size;
+    }
+
+    public void setReceiver(NodeInfo receiver){
+        this.receiver = receiver;
+    }
+    public NodeInfo getOriginalReceiver() {
+        return this.receiver;
     }
 }
