@@ -2,7 +2,7 @@ package com.noticemedan.p2p.Node;
 
 import java.io.Serializable;
 
-public class NodeInfo implements Serializable, Comparable {
+public class NodeInfo implements Serializable {
 	private String ip;
 	private Integer port;
 
@@ -28,11 +28,9 @@ public class NodeInfo implements Serializable, Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
-		int samePort = this.getPort().compareTo(((NodeInfo) o).getPort());
-		int sameIP = this.getIp().compareTo(((NodeInfo) o).getIp());
-		if(sameIP == samePort)
-			return sameIP;
-		else return -1;
+	public boolean equals(Object obj) {
+		if(obj instanceof NodeInfo)
+			return (this.port.equals(((NodeInfo) obj).getPort())) && this.ip.equals(((NodeInfo) obj).getIp());
+		return super.equals(obj);
 	}
 }

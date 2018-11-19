@@ -3,11 +3,12 @@ package com.noticemedan.p2p;
 import com.noticemedan.p2p.Client.*;
 import com.noticemedan.p2p.Exceptions.InvalidDataKeyException;
 import com.noticemedan.p2p.Exceptions.InvalidPortException;
+import com.noticemedan.p2p.Exceptions.RebuildingNetworkException;
 import com.noticemedan.p2p.Node.Node;
 import com.noticemedan.p2p.Node.NodeInfo;
 
+import java.io.IOException;
 import java.net.*;
-import java.util.Arrays;
 
 public class Main {
 
@@ -45,12 +46,14 @@ public class Main {
                 default:
                     printArgumentGuidelines();
             }
-        }catch(InvalidPortException | InvalidDataKeyException e){
+        }catch(InvalidPortException | InvalidDataKeyException | IOException e){
             e.getMessage();
+        } catch (RebuildingNetworkException e) {
+            System.out.println("Could not connect, the network is rebuilding. Please Try again in a few seconds.");
         }
     }
 
-    private static void createNodeThread(String port) throws InvalidPortException{
+    private static void createNodeThread(String port) throws InvalidPortException, IOException {
         node = new Node(getHostIp(), parsePort(port));
         new Thread(node).start();
     }

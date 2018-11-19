@@ -1,15 +1,17 @@
 package com.noticemedan.p2p.Node;
 
+import com.noticemedan.p2p.Exceptions.RebuildingNetworkException;
 import com.noticemedan.p2p.Message.*;
+import com.noticemedan.p2p.Message.enums.DataMessageType;
+import com.noticemedan.p2p.Message.enums.MessageType;
+import com.noticemedan.p2p.Message.enums.NetworkMessageType;
 
 import java.io.*;
 import java.net.*;
-import java.util.Hashtable;
+import java.util.*;
 
 public class Node implements Runnable {
 	private ServerSocket serverSocket;
-	private Socket clientSocket;
-	private ObjectOutputStream out;
 
 	private Hashtable<Integer, String> data;
 	private Hashtable<Integer, String> backup;
@@ -18,99 +20,122 @@ public class Node implements Runnable {
 	private NodeInfo front;
 	private NodeInfo back;
 
-	public Node(String ip, Integer port) {
+	public Node(String ip, Integer port) throws IOException {
 		this.self = new NodeInfo(ip, port);
 		this.data = new Hashtable<>();
 		this.backup = new Hashtable<>();
-		this.startServerSocket(port);
+		this.serverSocket = new ServerSocket(port);
 	}
 
-	private void startServerSocket(int port) {
-		try {
-			this.serverSocket = new ServerSocket(port);
-		}
-		catch(IOException e){
-			e.getMessage();
-		}
-	}
-
-	private void sendMessage(Message msg, NodeInfo receiver){
-		try {
-			this.clientSocket = new Socket(receiver.getIp(), receiver.getPort());
-			this.out = new ObjectOutputStream(this.clientSocket.getOutputStream());
-			out.writeObject(msg);
-		} catch (ConnectException | NoRouteToHostException e) {
-			handleNodeNotFound();
-			//Find new Front ( Send message to back until you get a message from your new front )
-		}
-
-		catch (IOException e) {
-			e.printStackTrace();
-		} finally {
+	@Override
+	public void run() {
+		while(true) {
 			try {
-				this.clientSocket.close();
-				this.out.close();
+				Socket s = serverSocket.accept();
+				new MessageListener(s).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	private void handleNodeNotFound() {
-		NetworkMessage msg = new NetworkMessage(NetworkMessageType.RECONNECT, this.self, this.front);
-		sendMessage(msg, this.back);
+	/**
+	 * @param msg either a Network- or Data Message
+	 * @param receiver
+	 */
+	private void sendMessage(Message msg, NodeInfo receiver) throws RebuildingNetworkException {
+		try {
+			Socket socket = new Socket(receiver.getIp(), receiver.getPort());
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			out.writeObject(msg);
+			socket.close();
+			out.close();
+		} catch (ConnectException | NoRouteToHostException e) {
+			rebuildNetwork(receiver);
+			throw new RebuildingNetworkException("Rebuilding Network", msg.getNode());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	private void handleConnect(Message msg) {
-		//The very first Node handled
+	private void rebuildNetwork(NodeInfo disconnectedNode){
+		ArrayList<NodeInfo> nodes = new ArrayList<>();
+		nodes.add(this.self);
+		boolean sendForward = disconnectedNode.equals(this.back);
+		Message msg = new NetworkMessage(NetworkMessageType.RECONNECT, nodes, sendForward);
+		try {
+			if (sendForward)
+				sendMessage(msg, this.front);
+			else sendMessage(msg, this.back);
+		}
+		//This is an indicator that more than one Node has crashed. We handle this by killing this process.
+		catch(RebuildingNetworkException e){
+			System.out.println("Unsupported Network State, Turning Off Node...");
+			Runtime.getRuntime().exit(0);
+		}
+	}
+
+	private void handleConnect(Message msg) throws RebuildingNetworkException {
+		NodeInfo node = msg.getNode();
+
+		//The very first Node being created is handled here.
 		if(this.back == null) {
-			this.back = msg.getNode();
 			NetworkMessage confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
-			this.sendMessage(confirm, this.back);
-			if(this.front == null){
-				this.front = msg.getNode();
-				NetworkMessage connect = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
-				this.sendMessage(connect, front);
-			}
+			this.sendMessage(confirm, node);
+			this.setBack(node);
+			if(front == null)
+				handleConfirm(msg);
 		}
 		else{
-			if(this.back.getPort().equals(msg.getNode().getPort())){
+			if(this.back.getPort().equals(msg.getNode().getPort()))
 				return;
-			}
-			NodeInfo oldBack = this.back;
-			this.setBack(msg.getNode());
-			NetworkMessage confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
-			this.sendMessage(confirm, this.back);
-			NetworkMessage switchMessage = new NetworkMessage(NetworkMessageType.SWITCH, this.back);
-			this.sendMessage(switchMessage, oldBack);
+			Message switchMessage = new NetworkMessage(NetworkMessageType.SWITCH, node);
+			this.sendMessage(switchMessage, this.back);
+
+			Message confirm = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
+			this.sendMessage(confirm, node);
+			this.setBack(node);
+
 		}
 	}
 
-	private void handleConfirm(Message msg){
+	private void handleConfirm(Message msg) throws RebuildingNetworkException {
 		if(this.front == null){
-			this.front = msg.getNode();
+			NodeInfo node = msg.getNode();
 			NetworkMessage connect = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
-			this.sendMessage(connect, front);
+			this.sendMessage(connect, node);
+			this.setFront(node);
 		}
 	}
 
 
-	private void handleReconnect(NetworkMessage msg) {
-		if(msg.getOldFront().equals(this.back)){
-			NetworkMessage connectMessage = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
-			this.sendMessage(connectMessage, msg.getNode());
-		}
-		else{
-			this.sendMessage(msg, this.back);
-		}
+	private void handleReconnect(NetworkMessage msg) throws RebuildingNetworkException {
+        if(msg.isForward()) {
+            if (msg.getOldFront().equals(this.back)) {
+                Message connectMessage = new NetworkMessage(NetworkMessageType.CONFIRM, this.self);
+                this.sendMessage(connectMessage, msg.getNode());
+            }
+            else{
+                this.sendMessage(msg, this.back);
+            }
+        } else{
+            if (msg.getOldFront().equals(this.front)) {
+                Message connectMessage = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
+                this.sendMessage(connectMessage, msg.getNode());
+            }
+            else{
+                this.sendMessage(msg, this.front);
+            }
+        }
+
 	}
 
 
-	private void handleSwitchFront(NetworkMessage msg) {
-		this.setFront(msg.getNode());
+	private void handleSwitchFront(NetworkMessage msg) throws RebuildingNetworkException {
 		this.sendBackup(this.data);
 		NetworkMessage confirmMessage = new NetworkMessage(NetworkMessageType.CONNECT, this.self);
-		this.sendMessage(confirmMessage, this.front);
+		this.sendMessage(confirmMessage, msg.getNode());
+		this.setFront(msg.getNode());
 	}
 
 
@@ -133,94 +158,13 @@ public class Node implements Runnable {
 		this.front = front;
 	}
 
-	@Override
-	public void run() {
-		while(true) {
-			try {
-				Socket s = serverSocket.accept();
-				new MessageHandler(s).start();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
 
-	public void connect(NodeInfo sender, NodeInfo receiver) {
+
+	public void connect(NodeInfo sender, NodeInfo receiver) throws RebuildingNetworkException{
 		NetworkMessage msg = new NetworkMessage(NetworkMessageType.CONNECT, sender);
 		this.sendMessage(msg, receiver);
 	}
 
-
-	class MessageHandler extends Thread {
-		Socket s;
-
-		MessageHandler(Socket s) {
-			this.s = s;
-		}
-
-		@Override
-		public void run() {
-			try {
-				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-				Message msg = (Message) in.readObject();
-				switch (msg.getMessageType()) {
-					case DATA:
-						handleDataMessage(msg);
-						break;
-					case NETWORK:
-						handleNetworkMessage(msg);
-						break;
-					default:
-						System.out.println("Unknown MessageType");
-						break;
-				}
-				s.close();
-				in.close();
-			} catch (IOException | ClassNotFoundException e1) {
-				e1.printStackTrace();
-			}
-			printNodeInformation();
-		}
-
-		public void handleNetworkMessage(Message message) {
-			NetworkMessage msg = (NetworkMessage) message;
-			switch (msg.getType()) {
-				case CONNECT:
-					handleConnect(msg);
-					break;
-				case SWITCH:
-					handleSwitchFront(msg);
-					break;
-				case CONFIRM:
-					handleConfirm(msg);
-					break;
-				case RECONNECT:
-					handleReconnect(msg);
-					break;
-				default:
-					System.out.println("Unknown NetworkMessageType");
-					break;
-			}
-		}
-
-		public void handleDataMessage(Message message) {
-			DataMessage msg = (DataMessage) message;
-			switch (msg.getType()) {
-				case PUT:
-					handlePut(msg);
-					break;
-				case GET:
-					handleGet(msg);
-					break;
-				case BACKUP:
-					handleBackup(msg);
-					break;
-				default:
-					System.out.println("Unknown DataMessageType");
-					break;
-			}
-		}
-	}
 
 
 	private void sendSuccess(NodeInfo receiver, boolean result) {
@@ -241,10 +185,9 @@ public class Node implements Runnable {
 		else {
 			this.backup.put(msg.getKey(), msg.getValue());
 		}
-		System.out.println(this.backup.size());
 	}
 
-	private void handleGet(DataMessage msg) {
+	private void handleGet(DataMessage msg) throws RebuildingNetworkException {
 		// TODO: Create "not found"
 		System.out.println(msg.toString());
 		String value = this.data.get(msg.getKey());
@@ -257,7 +200,7 @@ public class Node implements Runnable {
 		}
 	}
 
-	public void handlePut(DataMessage msg) {
+	public void handlePut(DataMessage msg) throws RebuildingNetworkException {
 		if((msg.getSize() == null || msg.getSize() < this.data.size()) && this.front != null){
 			msg.setSize(this.data.size());
 			this.sendMessage(msg, this.front);
@@ -269,15 +212,103 @@ public class Node implements Runnable {
 		}
 	}
 
-	private void sendBackupPut(Integer key, String value){
+	private void sendBackupPut(Integer key, String value) throws RebuildingNetworkException {
 		if(this.front != null) {
 			DataMessage backupMessage = new DataMessage(DataMessageType.BACKUP, this.front, key, value, null);
 			this.sendMessage(backupMessage, this.front);
 		}
 	}
 
-	private void sendBackup(Hashtable data){
+	private void sendBackup(Hashtable data) throws RebuildingNetworkException {
 		DataMessage backupMessage = new DataMessage(DataMessageType.BACKUP, this.front, data);
 		this.sendMessage(backupMessage, this.front);
+	}
+
+	/**
+	 * Inner Class used for interpreting all received messages on the ServerSocket.
+	 */
+	class MessageListener extends Thread {
+		Socket s;
+
+		MessageListener(Socket s) {
+			this.s = s;
+		}
+
+		@Override
+		public void run() {
+			Message msg = null;
+			try {
+				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+				msg = (Message) in.readObject();
+				switch (msg.getMessageType()) {
+					case DATA:
+						handleDataMessage(msg);
+						break;
+					case NETWORK:
+						handleNetworkMessage(msg);
+						break;
+					case ERROR:
+						System.out.println("The Network is rebuilding, please try again...");
+						//Runtime.getRuntime().exit(0);
+						break;
+					default:
+						System.out.println("Unknown MessageType");
+						break;
+				}
+				s.close();
+				in.close();
+			} catch (IOException | ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (RebuildingNetworkException re){
+				Message error = new Message(re.getDisconnectedNode(), MessageType.ERROR);
+				try {
+					sendMessage(error, msg.getNode());
+				}
+				catch (RebuildingNetworkException e) {
+					System.out.println("Unsupported Network State, Turning Off Node...");
+					Runtime.getRuntime().exit(0);
+				}
+			}
+			printNodeInformation();
+		}
+
+		private void handleNetworkMessage(Message message) throws RebuildingNetworkException {
+			NetworkMessage msg = (NetworkMessage) message;
+			switch (msg.getType()) {
+				case CONNECT:
+					handleConnect(msg);
+					break;
+				case SWITCH:
+					handleSwitchFront(msg);
+					break;
+				case CONFIRM:
+					handleConfirm(msg);
+					break;
+				case RECONNECT:
+					handleReconnect(msg);
+					break;
+				default:
+					System.out.println("Unknown NetworkMessageType");
+					break;
+			}
+		}
+
+		private void handleDataMessage(Message message) throws RebuildingNetworkException {
+			DataMessage msg = (DataMessage) message;
+			switch (msg.getType()) {
+				case PUT:
+					handlePut(msg);
+					break;
+				case GET:
+					handleGet(msg);
+					break;
+				case BACKUP:
+					handleBackup(msg);
+					break;
+				default:
+					System.out.println("Unknown DataMessageType");
+					break;
+			}
+		}
 	}
 }

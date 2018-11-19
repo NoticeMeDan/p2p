@@ -1,6 +1,6 @@
 package com.noticemedan.p2p.Client;
 import com.noticemedan.p2p.Message.DataMessage;
-import com.noticemedan.p2p.Message.DataMessageType;
+import com.noticemedan.p2p.Message.enums.DataMessageType;
 import com.noticemedan.p2p.Node.NodeInfo;
 
 import java.io.IOException;
